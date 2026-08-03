@@ -20,7 +20,7 @@ return new class extends Migration
 
             $table->foreignId('facility_id')
             ->constrained()
-            ->cascadeOnUpdate();
+            ->cascadeOnDelete();
 
             $table->unique([
                 'room_id',

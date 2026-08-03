@@ -13,6 +13,13 @@ return new class extends Migration
     {
         Schema::create('expenses', function (Blueprint $table) {
             $table->id();
+            $table->string('title');
+            $table->text('description')->nullable();
+            $table->decimal('amount',12,2)->default(0);
+            $table->date('expense_date')->nullable();
+            $table->foreignId('user_id')
+            ->constrained('users')
+            ->cascadeOnDelete();
             $table->timestamps();
         });
     }

@@ -2,11 +2,11 @@
 
 namespace Database\Factories;
 
-use App\Models\Facility;
+use App\Models\Facilitie;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Facility>
+ * @extends Factory<Facilitie>
  */
 class FacilityFactory extends Factory
 {
@@ -19,6 +19,7 @@ class FacilityFactory extends Factory
     {
         return [
             //
+
         ];
     }
 }

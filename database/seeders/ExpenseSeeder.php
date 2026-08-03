@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\Expense;
 
 class ExpenseSeeder extends Seeder
 {
@@ -13,5 +14,11 @@ class ExpenseSeeder extends Seeder
     public function run(): void
     {
         //
+        Expense::firstOrCreate
+        (
+            [
+
+            ]
+        );
     }
 }
