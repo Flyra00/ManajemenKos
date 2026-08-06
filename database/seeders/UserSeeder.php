@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 use App\Models\User;
 
+
+
+
 class UserSeeder extends Seeder
 {
     /**
@@ -16,10 +19,10 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         //
-        $admin = Role::firstOrCreate(
+        $admin = User::firstOrCreate(
             ['email' => 'admin@gmail.com'],
             [
-                'name'=> 'Admin_rafly',
+                'name'=> 'AdminRafly',
                 'phone' => '081234567890',
                 'password' => Hash::make('password'),
             ]
@@ -27,15 +30,15 @@ class UserSeeder extends Seeder
 
         $admin->assignRole('admin');
 
-        $caretaker = Role::firstOrCreate(
-            ['email'=> 'caretaker'],
+        $caretaker = User::firstOrCreate(
+            ['email'=> 'owner@gmail.com'],
             [
-                'name' => 'Caretaker_rafly',
+                'name' => 'OwnerRafly',
                 'phone'=> '081234567891',
                 'password'=> Hash::make('password'),
             ]
         );
 
-        $caretaker->assignRole('caretaker');
+        $caretaker->assignRole('Owner');
     }
 }

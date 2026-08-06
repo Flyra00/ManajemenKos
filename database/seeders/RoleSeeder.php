@@ -20,7 +20,7 @@ class RoleSeeder extends Seeder
         ]);
 
         Role::firstOrCreate([
-            'name'=> 'caretaker',
+            'name'=> 'owner',
             'guard_name' => 'web',
         ]);
 

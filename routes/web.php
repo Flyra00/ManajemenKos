@@ -17,4 +17,18 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+use App\Http\Controllers\RoomController;
+
+
+Route::middleware(['role:admin'])
+->group(function(){
+
+    Route::resource(
+        'rooms',
+        RoomController::class
+    );
+
+});
+
+
 require __DIR__.'/auth.php';
