@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\RoomController;
 
 
 Route::get('/', function () {
@@ -20,6 +21,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/rooms', function () {
         return view('rooms.index');
     })->name('rooms.index');
+    Route::resource('rooms', RoomController::class);
 
     Route::get('/tenants', function(){
         return view('tenants.index');

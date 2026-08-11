@@ -22,7 +22,7 @@ class Room extends Model
 
     public function facilities()
     {
-        return $this->belongsToMany(Facilitie::class);
+        return $this->belongsToMany(Facility::class);
     }
 
     public function leases()
