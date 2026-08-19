@@ -12,8 +12,11 @@ class Facility extends Model
         'description',
         ];
 
-        public function rooms()
-        {
-            return $this->belongsToMany(Room::class);
-        }
+    public function rooms()
+    {
+        return $this->belongsToMany(
+            Room::class,
+            'room_facilities'
+        );
+    }
 }

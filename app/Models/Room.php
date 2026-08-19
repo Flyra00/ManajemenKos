@@ -13,6 +13,7 @@ class Room extends Model
         "price",
         "status",
         "is_active",
+        "image",
         "description",
     ];
 
@@ -22,7 +23,10 @@ class Room extends Model
 
     public function facilities()
     {
-        return $this->belongsToMany(Facility::class);
+        return $this->belongsToMany(
+            Facility::class,
+            'room_facilities'
+        );
     }
 
     public function leases()

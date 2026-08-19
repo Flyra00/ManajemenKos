@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('rooms', function (Blueprint $table) {
             $table->id();
 
-            $table->string('room_number')->unique();    
+            $table->string('room_number')->unique();
             $table->string('floor')->nullable();
 
             $table->decimal('price', 12,2);
@@ -27,6 +27,9 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
 
             $table->text('description')->nullable();
+
+            $table->string('image')->nullable();
+            
             $table->timestamps();
         });
     }

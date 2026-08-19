@@ -3,6 +3,9 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\FacilityController;
+use App\Http\Controllers\TenantController;
+
 
 
 Route::get('/', function () {
@@ -18,14 +21,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/rooms', function () {
-        return view('rooms.index');
-    })->name('rooms.index');
     Route::resource('rooms', RoomController::class);
 
-    Route::get('/tenants', function(){
-        return view('tenants.index');
-    })->name('tenants.index');
+    Route::resource('tenants', TenantController::class);
+
 
     Route::get('/leases', function () {
         return view('leases.index');
@@ -47,9 +46,7 @@ Route::middleware('auth')->group(function () {
         return view('reports.index');
     })->name('reports.index');
 
-    Route::get('/facilities', function () {
-        return view('facilities.index');
-    })->name('facilities.index');
+    Route::resource('facilities', FacilityController::class);
 
     Route::get('/settings', function () {
         return view('settings.index');
