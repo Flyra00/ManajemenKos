@@ -141,13 +141,14 @@ class MaintenanceController extends Controller
             $tenant = $user->tenant;
             if (!$tenant) {
                 return redirect()->route('dashboard')
-                    ->with('error', 'Profil penghuni Anda belum lengkap.');
+                    ->with('error', 'Anda belum memiliki kamar sewa aktif. Silakan pilih dan sewa kamar terlebih dahulu untuk mengajukan perbaikan.');
             }
             $activeRoomIds = $tenant->leases()->whereIn('status', ['active', 'pending'])->pluck('room_id');
-            $rooms = Room::whereIn('id', $activeRoomIds)->get();
-            if ($rooms->isEmpty()) {
-                $rooms = Room::where('is_active', true)->get();
+            if ($activeRoomIds->isEmpty()) {
+                return redirect()->route('dashboard')
+                    ->with('error', 'Anda belum memiliki kamar sewa aktif. Silakan pilih dan sewa kamar terlebih dahulu untuk mengajukan perbaikan.');
             }
+            $rooms = Room::whereIn('id', $activeRoomIds)->get();
             $tenants = collect([$tenant->load('user')]);
             $users = collect();
             $selectedTenantId = $tenant->id;
@@ -172,7 +173,14 @@ class MaintenanceController extends Controller
         if ($isTenant) {
             $tenant = $user->tenant;
             if (!$tenant) {
-                return back()->with('error', 'Profil penghuni Anda belum terdaftar.');
+                return redirect()->route('dashboard')
+                    ->with('error', 'Anda belum memiliki kamar sewa aktif. Silakan pilih dan sewa kamar terlebih dahulu.');
+            }
+
+            $allowedRoomIds = $tenant->leases()->whereIn('status', ['active', 'pending'])->pluck('room_id');
+            if ($allowedRoomIds->isEmpty()) {
+                return redirect()->route('dashboard')
+                    ->with('error', 'Anda belum memiliki kamar sewa aktif. Silakan sewa kamar terlebih dahulu untuk mengajukan keluhan.');
             }
 
             $validated = $request->validate([
@@ -184,8 +192,7 @@ class MaintenanceController extends Controller
             ]);
 
             // Jika penyewa memiliki kontrak sewa kamar, validasi agar tidak melaporkan kamar yang salah
-            $allowedRoomIds = $tenant->leases()->pluck('room_id');
-            if ($allowedRoomIds->isNotEmpty() && !$allowedRoomIds->contains($validated['room_id'])) {
+            if (!$allowedRoomIds->contains($validated['room_id'])) {
                 return back()->withInput()->withErrors(['room_id' => 'Anda hanya dapat melaporkan keluhan untuk kamar yang Anda sewa.']);
             }
 

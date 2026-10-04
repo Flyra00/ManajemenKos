@@ -26,6 +26,32 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+            'phone' => [
+                'nullable',
+                'string',
+                'max:20',
+                Rule::unique(User::class)->ignore($this->user()->id),
+            ],
+            'ktp_number' => [
+                'nullable',
+                'string',
+                'regex:/^[0-9]{16}$/',
+                Rule::unique('tenants', 'ktp_number')->ignore($this->user()->tenant?->id),
+            ],
+        ];
+    }
+
+    /**
+     * Custom messages for validation errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'ktp_number.regex'  => 'Nomor KTP / NIK harus terdiri dari tepat 16 digit angka.',
+            'ktp_number.unique' => 'Nomor KTP / NIK ini sudah terdaftar pada akun lain.',
+            'phone.unique'      => 'Nomor telepon ini sudah digunakan oleh akun lain.',
         ];
     }
 }

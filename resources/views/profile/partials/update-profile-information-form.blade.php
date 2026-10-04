@@ -1,11 +1,10 @@
 <section>
-    <header>
-        <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-            {{ __('Profile Information') }}
-        </h2>
-
-        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {{ __("Update your account's profile information and email address.") }}
+    <header style="margin-bottom: 20px;">
+        <h3 style="font-size: 18px; font-weight: 800; color: var(--color-neutral-900); margin: 0 0 4px;">
+            Informasi Profil Akun
+        </h3>
+        <p class="small muted" style="margin: 0; line-height: 1.5;">
+            Perbarui data nama lengkap, alamat email, nomor telepon/WhatsApp, dan identitas NIK KTP Anda.
         </p>
     </header>
 
@@ -13,62 +12,91 @@
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('profile.update') }}" style="display: flex; flex-direction: column; gap: 16px;">
         @csrf
         @method('patch')
 
-        <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
-            <x-input-error class="mt-2" :messages="$errors->get('name')" />
+        <!-- Nama Lengkap -->
+        <div class="field">
+            <label for="name" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; color: var(--color-neutral-800);">
+                Nama Lengkap <span class="text-accent">*</span>
+            </label>
+            <input class="input @error('name') is-invalid @enderror" type="text" id="name" name="name" value="{{ old('name', $user->name) }}" required autocomplete="name">
+            @error('name')
+                <p class="form-error" style="color: #dc2626; font-size: 12px; margin-top: 4px;">{{ $message }}</p>
+            @enderror
         </div>
 
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
+        <!-- Alamat Email -->
+        <div class="field">
+            <label for="email" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; color: var(--color-neutral-800);">
+                Alamat Email <span class="text-accent">*</span>
+            </label>
+            <input class="input @error('email') is-invalid @enderror" type="email" id="email" name="email" value="{{ old('email', $user->email) }}" required autocomplete="username">
+            @error('email')
+                <p class="form-error" style="color: #dc2626; font-size: 12px; margin-top: 4px;">{{ $message }}</p>
+            @enderror
 
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div>
-                    <p class="text-sm mt-2 text-gray-800 dark:text-gray-200">
-                        {{ __('Your email address is unverified.') }}
-
-                        <button form="send-verification" class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
-                            {{ __('Click here to re-send the verification email.') }}
+                <div style="margin-top: 8px;">
+                    <p class="small muted" style="color: #b45309;">
+                        Email Anda belum diverifikasi.
+                        <button form="send-verification" class="btn btn-ghost btn-sm" style="font-size: 12px; padding: 2px 6px; text-decoration: underline;">
+                            Kirim ulang tautan verifikasi
                         </button>
                     </p>
 
                     @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-green-600 dark:text-green-400">
-                            {{ __('A new verification link has been sent to your email address.') }}
+                        <p class="small" style="color: #16a34a; margin-top: 4px;">
+                            Tautan verifikasi baru telah dikirimkan ke email Anda.
                         </p>
                     @endif
                 </div>
             @endif
         </div>
 
-        @if($user->tenant)
-            <div>
-                <x-input-label for="ktp_number" value="Nomor KTP (NIK Pribadi)" />
-                <x-text-input id="ktp_number" type="text" class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 font-mono text-gray-700 dark:text-gray-300" :value="$user->tenant->ktp_number" readonly />
-                <p class="text-xs text-gray-500 mt-1">
-                    Nomor identitas KTP Anda dilindungi hak privasi dan tidak ditampilkan kepada publik atau admin.
-                </p>
-            </div>
-        @endif
+        <!-- Nomor Telepon / WhatsApp -->
+        <div class="field">
+            <label for="phone" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; color: var(--color-neutral-800);">
+                Nomor Telepon / WhatsApp
+            </label>
+            <input class="input @error('phone') is-invalid @enderror" type="tel" id="phone" name="phone" value="{{ old('phone', $user->phone) }}" placeholder="Contoh: 081234567890" autocomplete="tel">
+            <p class="small muted" style="font-size: 11px; margin-top: 4px;">
+                Digunakan untuk notifikasi sewa, invoice otomatis, dan komunikasi darurat dengan pengelola kos.
+            </p>
+            @error('phone')
+                <p class="form-error" style="color: #dc2626; font-size: 12px; margin-top: 4px;">{{ $message }}</p>
+            @enderror
+        </div>
 
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
+        <!-- Nomor KTP (NIK Pribadi) -->
+        <div class="field">
+            <label for="ktp_number" style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; color: var(--color-neutral-800);">
+                Nomor KTP (NIK Pribadi)
+            </label>
+            <input
+                class="input @error('ktp_number') is-invalid @enderror"
+                type="text"
+                id="ktp_number"
+                name="ktp_number"
+                maxlength="16"
+                pattern="[0-9]{16}"
+                inputmode="numeric"
+                value="{{ old('ktp_number', ($user->tenant && !str_starts_with($user->tenant->ktp_number, 'KTP-')) ? $user->tenant->ktp_number : '') }}"
+                placeholder="Masukkan 16 digit NIK KTP Anda"
+            >
+            <p class="small muted" style="font-size: 11px; margin-top: 4px;">
+                Nomor identitas KTP Anda dilindungi hak privasi dan tidak ditampilkan kepada publik atau admin.
+            </p>
+            @error('ktp_number')
+                <p class="form-error" style="color: #dc2626; font-size: 12px; margin-top: 4px;">{{ $message }}</p>
+            @enderror
+        </div>
 
-            @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600 dark:text-gray-400"
-                >{{ __('Saved.') }}</p>
-            @endif
+        <div style="margin-top: 8px;">
+            <button type="submit" class="btn btn-primary" style="font-weight: 700; padding: 10px 24px;">
+                Simpan Perubahan
+            </button>
         </div>
     </form>
 </section>

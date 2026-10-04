@@ -32,4 +32,21 @@ class RegistrationTest extends TestCase
         $this->assertAuthenticated();
         $response->assertRedirect(route('dashboard', absolute: false));
     }
+
+    public function test_new_user_registration_saves_phone_number(): void
+    {
+        $response = $this->post('/register', [
+            'name'                  => 'Dafa User',
+            'email'                 => 'dafa@example.com',
+            'phone'                 => '081234567890',
+            'password'              => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('users', [
+            'email' => 'dafa@example.com',
+            'phone' => '081234567890',
+        ]);
+    }
 }

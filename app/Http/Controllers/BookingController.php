@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 
 class BookingController extends Controller
@@ -26,7 +27,16 @@ class BookingController extends Controller
         }
 
         // 2. Validasi input formulir
+        $targetUser = Auth::user() ?? User::where('email', $request->email)->first();
+        $targetTenantId = $targetUser?->tenant?->id;
+
         $rules = [
+            'ktp_number'      => [
+                'required',
+                'string',
+                'regex:/^[0-9]{16}$/',
+                Rule::unique('tenants', 'ktp_number')->ignore($targetTenantId),
+            ],
             'start_date'      => ['required', 'date', 'after_or_equal:today'],
             'duration_months' => ['nullable', 'integer', 'min:1', 'max:24'],
             'payment_type'    => ['nullable', 'in:full,deposit_50'],
@@ -39,7 +49,13 @@ class BookingController extends Controller
             $rules['password'] = ['required', 'string', 'min:8'];
         }
 
-        $validated = $request->validate($rules);
+        $messages = [
+            'ktp_number.required' => 'Nomor KTP / NIK (16 digit) wajib diisi.',
+            'ktp_number.regex'    => 'Nomor KTP / NIK harus terdiri dari tepat 16 digit angka.',
+            'ktp_number.unique'   => 'Nomor KTP / NIK ini sudah terdaftar pada sistem hunian.',
+        ];
+
+        $validated = $request->validate($rules, $messages);
 
         // 3. Autentikasi / Auto-Register Calon Tenant
         if (Auth::check()) {
@@ -100,16 +116,24 @@ class BookingController extends Controller
             $user->assignRole('tenant');
         }
 
-        // 4. Pastikan record Tenant tersedia
-        $tenant = Tenant::firstOrCreate(
-            ['user_id' => $user->id],
-            [
-                'ktp_number'        => $request->ktp_number ?? ('KTP-' . $user->id . '-' . time()),
+        // 4. Pastikan data record Tenant tersimpan dengan nomor KTP resmi
+        $tenant = $user->tenant;
+        if ($tenant) {
+            $tenant->update([
+                'ktp_number'        => $validated['ktp_number'],
+                'emergency_name'    => $tenant->emergency_name ?: $user->name,
+                'emergency_contact' => $tenant->emergency_contact ?: ($user->phone ?? '-'),
+                'job'               => $tenant->job ?: 'Penyewa Kos',
+            ]);
+        } else {
+            $tenant = Tenant::create([
+                'user_id'           => $user->id,
+                'ktp_number'        => $validated['ktp_number'],
                 'emergency_name'    => $user->name,
                 'emergency_contact' => $user->phone ?? '-',
                 'job'               => 'Penyewa Kos',
-            ]
-        );
+            ]);
+        }
 
         // 5. Buat Kontrak Sewa (Lease) berstatus pending dengan masa aktif awal 60 hari (2 bulan)
         $startDate = Carbon::parse($validated['start_date']);

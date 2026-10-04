@@ -12,7 +12,10 @@
           <h2 class="page-title">Maintenance & Keluhan</h2>
           <p class="page-sub">Pantau dan kelola tiket laporan kerusakan kamar serta perbaikan fasilitas kos.</p>
         </div>
-        @if(!auth()->user() || !auth()->user()->hasRole('owner'))
+        @php
+          $tenantHasRoom = !auth()->check() || !auth()->user()->hasRole('tenant') || (auth()->user()->tenant && auth()->user()->tenant->leases()->whereIn('status', ['active', 'pending'])->exists());
+        @endphp
+        @if((!auth()->user() || !auth()->user()->hasRole('owner')) && $tenantHasRoom)
           <div class="flex head-actions">
             <a href="{{ route('maintenance.create') }}" class="btn btn-primary">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
@@ -22,6 +25,24 @@
         @endif
       </section>
 
+      @if(auth()->check() && auth()->user()->hasRole('tenant') && !$tenantHasRoom)
+        <div class="card elev-sm" style="margin-bottom: 24px; background: #eff6ff; border: 1px solid #bfdbfe; padding: 18px 20px; border-radius: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div style="width: 40px; height: 40px; border-radius: 50%; background: #dbeafe; display: flex; align-items: center; justify-content: center; color: #2563eb; flex-shrink: 0;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <div>
+                <h4 style="margin: 0 0 4px; font-size: 15px; font-weight: 700; color: #1e40af;">Anda Belum Memiliki Kamar Aktif</h4>
+                <p class="small" style="margin: 0; color: #1e3a8a;">Layanan tiket laporan perbaikan fasilitas hanya dapat diajukan setelah Anda aktif menyewa kamar kos.</p>
+              </div>
+            </div>
+            <a href="{{ route('public.rooms.index') }}" class="btn btn-primary btn-sm" style="font-weight: 600;">
+              Pilih Kamar Dari Katalog &rarr;
+            </a>
+          </div>
+        </div>
+      @endif
 
       @if(session('success'))
         <div class="alert alert-success" role="alert">

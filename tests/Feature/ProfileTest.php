@@ -96,4 +96,30 @@ class ProfileTest extends TestCase
 
         $this->assertNotNull($user->fresh());
     }
+
+    public function test_user_can_update_phone_and_ktp_number(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile', [
+                'name'       => 'Rafly Updated',
+                'email'      => $user->email,
+                'phone'      => '081298765432',
+                'ktp_number' => '3201019988776655',
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+        $this->assertSame('081298765432', $user->phone);
+
+        $this->assertDatabaseHas('tenants', [
+            'user_id'    => $user->id,
+            'ktp_number' => '3201019988776655',
+        ]);
+    }
 }

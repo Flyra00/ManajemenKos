@@ -237,6 +237,15 @@
                 </div>
 
                 <div class="field">
+                  <label for="ktp_number">Nomor KTP / NIK (16 Digit) <span class="text-accent">*</span></label>
+                  <input class="input @error('ktp_number') is-invalid @enderror" type="text" id="ktp_number" name="ktp_number" value="{{ old('ktp_number') }}" placeholder="16 digit angka sesuai KTP" maxlength="16" pattern="[0-9]{16}" inputmode="numeric" required>
+                  <span class="small muted" style="font-size: 11px;">Wajib diisi sesuai KTP asli untuk dokumen kontrak hunian resmi.</span>
+                  @error('ktp_number')
+                    <p class="form-error">{{ $message }}</p>
+                  @enderror
+                </div>
+
+                <div class="field">
                   <label for="password">Kata Sandi Akun Baru <span class="text-accent">*</span></label>
                   <input class="input @error('password') is-invalid @enderror" type="password" id="password" name="password" placeholder="Minimal 8 karakter" required>
                   <span class="small muted" style="font-size: 11px;">Digunakan untuk login akun tenant Anda nantinya.</span>
@@ -249,7 +258,16 @@
                 <div class="card" style="padding: 12px 16px; background: var(--color-neutral-100); border: 1px solid var(--color-divider);">
                   <div class="small muted">Login sebagai penyewa:</div>
                   <strong style="font-size: 15px;">{{ auth()->user()->name }}</strong>
-                  <div class="small muted">{{ auth()->user()->email }} · {{ auth()->user()->phone }}</div>
+                  <div class="small muted">{{ auth()->user()->email }} · {{ auth()->user()->phone ?? 'Belum ada nomor HP' }}</div>
+                </div>
+
+                <div class="field">
+                  <label for="ktp_number">Nomor KTP / NIK (16 Digit) <span class="text-accent">*</span></label>
+                  <input class="input @error('ktp_number') is-invalid @enderror" type="text" id="ktp_number" name="ktp_number" value="{{ old('ktp_number', (auth()->user()->tenant && !str_starts_with(auth()->user()->tenant->ktp_number, 'KTP-')) ? auth()->user()->tenant->ktp_number : '') }}" placeholder="16 digit angka sesuai KTP" maxlength="16" pattern="[0-9]{16}" inputmode="numeric" required>
+                  <span class="small muted" style="font-size: 11px;">Wajib diisi sesuai KTP asli untuk dokumen kontrak hunian resmi.</span>
+                  @error('ktp_number')
+                    <p class="form-error">{{ $message }}</p>
+                  @enderror
                 </div>
               @endguest
 

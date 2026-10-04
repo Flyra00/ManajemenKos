@@ -41,6 +41,7 @@ class DatabaseSynchronizationTest extends TestCase
             'name'            => 'Penyewa Deposit',
             'email'           => 'deposit@test.com',
             'phone'           => '081234567899',
+            'ktp_number'      => '3201012345670099',
             'password'        => 'password123',
             'start_date'      => now()->addDays(2)->toDateString(),
             'duration_months' => 1,

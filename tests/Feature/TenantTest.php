@@ -352,6 +352,7 @@ class TenantTest extends TestCase
             'name' => 'User Pertama',
             'email' => 'user1@example.com',
             'phone' => '081111111111',
+            'ktp_number' => '3201012345670011',
             'password' => 'password123',
             'start_date' => now()->toDateString(),
             'duration_months' => 1,
@@ -360,11 +361,12 @@ class TenantTest extends TestCase
 
         auth()->logout();
 
-        // Booking 2 (berbeda user, tanpa KTP eksplisit)
+        // Booking 2 (berbeda user dengan KTP masing-masing)
         $res2 = $this->post(route('public.rooms.book', $room2), [
             'name' => 'User Kedua',
             'email' => 'user2@example.com',
             'phone' => '082222222222',
+            'ktp_number' => '3201012345670012',
             'password' => 'password123',
             'start_date' => now()->toDateString(),
             'duration_months' => 1,
@@ -406,6 +408,7 @@ class TenantTest extends TestCase
             'name'            => 'Penyewa Baru',
             'email'           => 'baru@example.com',
             'phone'           => '081234567800',
+            'ktp_number'      => '3201012345670013',
             'password'        => 'password123',
             'start_date'      => $today->toDateString(),
         ]);

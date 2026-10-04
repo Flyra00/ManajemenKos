@@ -31,29 +31,21 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'phone'    => ['nullable', 'string', 'max:20', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'phone'    => $request->phone,
             'password' => Hash::make($request->password),
         ]);
 
         \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'tenant', 'guard_name' => 'web']);
         $user->assignRole('tenant');
-
-        \App\Models\Tenant::firstOrCreate(
-            ['user_id' => $user->id],
-            [
-                'ktp_number'        => 'KTP-' . $user->id . '-' . time(),
-                'emergency_name'    => $user->name,
-                'emergency_contact' => '-',
-                'job'               => 'Penyewa Kos',
-            ]
-        );
 
         event(new Registered($user));
 

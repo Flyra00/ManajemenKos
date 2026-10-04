@@ -19,10 +19,15 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-8h6v8"/></svg>
           <span>Pilih Kamar</span>
         </a>
-        <a class="nav-btn {{ request()->routeIs('maintenance.*') ? 'active' : '' }}" href="{{ route('maintenance.index') }}">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          <span>Maintenance</span>
-        </a>
+        @php
+          $tenantHasRoom = auth()->user()->tenant && auth()->user()->tenant->leases()->whereIn('status', ['active', 'pending'])->exists();
+        @endphp
+        @if($tenantHasRoom)
+          <a class="nav-btn {{ request()->routeIs('maintenance.*') ? 'active' : '' }}" href="{{ route('maintenance.index') }}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>Maintenance</span>
+          </a>
+        @endif
       @endif
 
       {{-- Menu Master Properti & Penghuni: Khusus Admin & Owner (Staff tidak mengelola ini) --}}
