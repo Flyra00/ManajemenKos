@@ -707,18 +707,84 @@
   </main>
 
   <!-- ===================== FOOTER ===================== -->
-  <footer class="site-footer" style="padding: 35px 0; background: #ffffff; border-top: 1px solid var(--color-divider);">
-    <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-      <div>
-        <a class="brand" href="{{ route('home') }}" style="margin-bottom: 4px; display: inline-block;">
-          <span class="brand-mark">K</span>
-          Kos<span class="brand-accent">Fly</span>
-        </a>
-        <p class="small muted" style="margin: 0;">{{ $kosSettings['name'] ?? 'KosFly Residence' }} — {{ $kosSettings['address'] ?? 'Bandung' }}</p>
+  <footer class="site-footer" style="background: #ffffff; border-top: 1px solid var(--color-divider); padding: 50px 0 28px;">
+    <div class="container">
+      <div class="footer-grid">
+
+        <!-- Kolom 1: Brand & Profil Singkat -->
+        <div class="footer-brand" style="max-width: 340px;">
+          <a class="brand" href="{{ route('home') }}" aria-label="KosFly — Beranda" style="margin-bottom: 12px; display: inline-block;">
+            <span class="brand-mark" aria-hidden="true">K</span>
+            Kos<span class="brand-accent">Fly</span>
+          </a>
+          <p style="font-size: 14px; color: var(--color-text-muted); line-height: 1.6; margin: 0 0 16px;">
+            Hunian kos modern, nyaman, dan strategis dengan sistem reservasi instan, pembayaran tagihan transparan, dan layanan penghuni terpercaya.
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--color-text-muted);">
+            <div style="display: flex; align-items: flex-start; gap: 8px;">
+              <span style="color: var(--color-primary); flex-shrink: 0; font-size: 15px; line-height: 1.2;">📍</span>
+              <span>{{ $kosSettings['address'] ?? 'Jl. Sukabirus No. 12, Dayeuhkolot, Bandung' }}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--color-primary); flex-shrink: 0; font-size: 15px;">📞</span>
+              <span>{{ $kosSettings['phone'] ?? '0812-3456-7890' }}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: #22c55e; flex-shrink: 0; font-size: 15px;">💬</span>
+              <span>Layanan Respon: Setiap Hari 08.00 – 21.00 WIB</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kolom 2: Jelajahi Kos -->
+        <nav class="footer-col" aria-label="Navigasi jelajahi kos">
+          <h4 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-soft); margin-bottom: 16px;">
+            Jelajahi Kos
+          </h4>
+          <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 14px;">
+            <li><a href="#kamar-tersedia" style="color: var(--color-text-muted); text-decoration: none;">Pilihan Kamar Tersedia</a></li>
+            <li><a href="#fasilitas" style="color: var(--color-text-muted); text-decoration: none;">Fasilitas Gedung &amp; Kamar</a></li>
+            <li><a href="#lokasi" style="color: var(--color-text-muted); text-decoration: none;">Akses &amp; Lokasi Sekitar</a></li>
+            <li><a href="#faq" style="color: var(--color-text-muted); text-decoration: none;">Tanya Jawab (FAQ)</a></li>
+          </ul>
+        </nav>
+
+        <!-- Kolom 3: Layanan & Survei -->
+        <nav class="footer-col" aria-label="Navigasi layanan dan bantuan">
+          <h4 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-soft); margin-bottom: 16px;">
+            Layanan &amp; Bantuan
+          </h4>
+          <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 14px;">
+            <li><a href="{{ $waUrl }}" target="_blank" rel="noopener" style="color: var(--color-text-muted); text-decoration: none;">Jadwalkan Survei Kamar</a></li>
+            <li><a href="{{ $gmapsUrl ?? '#' }}" target="_blank" rel="noopener" style="color: var(--color-text-muted); text-decoration: none;">Petunjuk Arah (Google Maps)</a></li>
+            <li><a href="{{ $waUrl }}" target="_blank" rel="noopener" style="color: var(--color-text-muted); text-decoration: none;">Hubungi Pengelola via WhatsApp</a></li>
+            <li><a href="{{ route('login') }}" style="color: var(--color-text-muted); text-decoration: none;">Tiket Bantuan Perbaikan</a></li>
+          </ul>
+        </nav>
+
+        <!-- Kolom 4: Akun & Portal Penghuni -->
+        <nav class="footer-col" aria-label="Navigasi akun penghuni">
+          <h4 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-soft); margin-bottom: 16px;">
+            Portal Penghuni
+          </h4>
+          <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 14px;">
+            @auth
+              <li><a href="{{ route('dashboard') }}" style="color: var(--color-primary); font-weight: 600; text-decoration: none;">Buka Dashboard Saya &rarr;</a></li>
+              <li><a href="{{ route('profile.edit') }}" style="color: var(--color-text-muted); text-decoration: none;">Pengaturan Profil</a></li>
+            @else
+              <li><a href="{{ route('login') }}" style="color: var(--color-text-muted); text-decoration: none;">Masuk Akun Penghuni</a></li>
+              <li><a href="{{ route('register') }}" style="color: var(--color-text-muted); text-decoration: none;">Daftar Akun Baru</a></li>
+              <li><a href="{{ route('password.request') }}" style="color: var(--color-text-muted); text-decoration: none;">Lupa Kata Sandi?</a></li>
+            @endauth
+          </ul>
+        </nav>
+
       </div>
 
-      <div class="small muted">
-        &copy; {{ date('Y') }} KosFly. Hak Cipta Dilindungi.
+      <!-- Bagian Bawah Footer (Copyright & Label) -->
+      <div class="footer-bottom" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--color-divider); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 13px; color: var(--color-text-soft);">
+        <span>&copy; {{ date('Y') }} {{ $kosSettings['name'] ?? 'KosFly Residence' }}. Hak Cipta Dilindungi.</span>
+        <span>Sistem Manajemen Hunian Kos Modern &amp; Terpercaya</span>
       </div>
     </div>
   </footer>
