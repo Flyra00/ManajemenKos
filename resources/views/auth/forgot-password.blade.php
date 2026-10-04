@@ -74,11 +74,6 @@
             <div>
               <strong>Tautan Terkirim!</strong>
               <div style="margin-top: 2px;">{{ session('status') }}</div>
-              @if(app()->environment('local') && config('mail.default') === 'log')
-                <div style="margin-top: 8px; font-size: 12px; color: #15803d; border-top: 1px dashed #86efac; padding-top: 6px;">
-                  <em>Mode Lokal (Laragon):</em> Email dicatat di berkas <code>storage/logs/laravel.log</code>. Buka berkas tersebut untuk mengambil tautan reset langsung.
-                </div>
-              @endif
             </div>
           </div>
         @endif
