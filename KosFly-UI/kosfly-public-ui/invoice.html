@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice #INV-202609-0001 — KosFly</title>
+  <meta name="description" content="Tagihan pembayaran sewa kamar kos KosFly #INV-202609-0001">
+
+  <!-- Font Archivo — identitas tipografi KosFly -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet utama KosFly -->
+  <link rel="stylesheet" href="../style.css">
+</head>
+
+<body class="public-page">
+
+  <!-- ============================================================
+       1. NAVBAR PUBLIK
+       ============================================================ -->
+  <header class="site-nav" id="siteNav">
+    <div class="container">
+      <a class="brand" href="index.html" aria-label="KosFly — Beranda">
+        <span class="brand-mark">K</span>
+        Kos<span class="brand-accent">Fly</span>
+      </a>
+
+      <div class="nav-cta">
+        <a class="btn btn-secondary btn-sm" href="login.html">Masuk</a>
+        <a class="btn btn-primary btn-sm" href="register.html">Daftar</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       2. KONTEN UTAMA: DOKUMEN INVOICE & FORM PEMBAYARAN
+       ============================================================ -->
+  <main style="padding: 40px 0 80px;">
+    <div class="container" style="max-width: 860px; margin: 0 auto;">
+
+      <!-- Banner Sukses Penerbitan -->
+      <div class="alert alert-success" style="margin-bottom: 24px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <span>Pemesanan kamar berhasil! Invoice tagihan Anda telah terbit. Silakan lakukan pembayaran dalam batas waktu 1x24 jam.</span>
+      </div>
+
+      <!-- KARTU DOKUMEN INVOICE RESMI -->
+      <div class="card elev-sm" style="padding: 36px; border: 1px solid var(--color-divider); border-radius: 8px; background: #fff;">
+        
+        <!-- Header Dokumen Invoice -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--color-neutral-900); padding-bottom: 24px; margin-bottom: 24px;">
+          <div>
+            <div class="brand" style="font-size: 26px; margin-bottom: 4px;">
+              Kos<span class="brand-accent">Fly</span>
+            </div>
+            <!-- THIS VALUE WILL LATER BECOME: {{ $kosSettings['name'] }} -->
+            <div class="small muted">KosFly Residence · Sukabirus No. 12, Bandung</div>
+            <div class="small muted">WhatsApp: 0812-3456-7890 · Email: info@kosfly.com</div>
+          </div>
+
+          <div style="text-align: right;">
+            <span class="small muted" style="text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700;">INVOICE TAGIHAN</span>
+            <!-- THIS VALUE WILL LATER BECOME: {{ $payment->invoice_number }} -->
+            <div style="font-size: 22px; font-weight: 800; font-family: monospace; color: var(--color-neutral-900); margin: 4px 0;">
+              INV-202609-0001
+            </div>
+            <!-- BADGE STATUS TAGIHAN -->
+            <div>
+              <span class="tag tag-outline" style="font-weight: 700; border-color: var(--color-accent); color: var(--color-accent);">
+                BELUM DIBAYAR
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metadata Penerima & Batas Waktu 1x24 Jam -->
+        <div class="grid-2" style="gap: 20px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--color-divider);">
+          <div>
+            <span class="small muted" style="display: block; margin-bottom: 4px;">Tagihan Ditujukan Kepada:</span>
+            <!-- THIS VALUE WILL LATER BECOME: {{ $payment->lease->tenant->user->name }} -->
+            <strong style="font-size: 16px; color: var(--color-neutral-900);">Ahmad Dani</strong>
+            <!-- THIS VALUE WILL LATER BECOME: {{ $payment->lease->tenant->user->email }} -->
+            <div class="small muted">dani@example.com · 081234567899</div>
+          </div>
+
+          <div style="text-align: right;">
+            <div style="margin-bottom: 6px;">
+              <span class="small muted">Tanggal Terbit:</span>
+              <strong>03 September 2026, 08:30 WIB</strong>
+            </div>
+            <div>
+              <span class="small muted">Batas Waktu Bayar (1x24 Jam):</span>
+              <strong style="color: var(--color-accent); font-size: 15px;">04 September 2026, 08:30 WIB</strong>
+            </div>
+            <div class="small muted" style="margin-top: 4px; font-weight: 600; color: var(--color-accent);">
+              ⏳ Sisa Waktu: 23 jam 59 menit
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabel Rincian Item Tagihan -->
+        <div class="table-wrap" style="margin-bottom: 28px;">
+          <table class="table" style="width: 100%;">
+            <thead>
+              <tr style="background: var(--color-neutral-50);">
+                <th>Deskripsi Item</th>
+                <th>Kamar / Lokasi</th>
+                <th>Periode Sewa</th>
+                <th style="text-align: right;">Jumlah Nominal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <strong>Sewa Kamar Kos (Bulanan)</strong>
+                  <div class="small muted">Fasilitas: AC, Kamar Mandi Dalam, WiFi</div>
+                </td>
+                <td>
+                  <!-- THIS VALUE WILL LATER BECOME: Kamar {{ $payment->lease->room->room_number }} -->
+                  <strong>Kamar A-01</strong>
+                  <div class="small muted">Lantai 1</div>
+                </td>
+                <td>
+                  03 Sep 2026 s/d 03 Okt 2026
+                  <div class="small muted">Durasi: 1 Bulan</div>
+                </td>
+                <td style="text-align: right; font-weight: 700; font-size: 15px;">
+                  Rp 1.500.000
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr style="border-top: 2px solid var(--color-neutral-900);">
+                <td colspan="3" style="text-align: right; font-weight: 800; font-size: 16px;">TOTAL TAGIHAN:</td>
+                <td style="text-align: right; font-weight: 800; font-size: 22px; color: var(--color-neutral-900);">
+                  Rp 1.500.000
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Petunjuk Pembayaran & Rekening Bank Tujuan -->
+        <!-- DATA WILL LATER COME FROM BLADE: {{ $kosSettings['bank_name'] }}, {{ $kosSettings['bank_account'] }} -->
+        <div style="background: var(--color-neutral-50); border: 1px solid var(--color-divider); border-radius: 6px; padding: 20px; margin-bottom: 28px;">
+          <h3 style="font-size: 16px; font-weight: 800; margin: 0 0 10px; color: var(--color-neutral-900);">
+            Petunjuk Pembayaran Transfer Bank
+          </h3>
+          <p class="small muted" style="margin: 0 0 16px; font-size: 13px;">
+            Silakan transfer tepat sebesar <strong>Rp 1.500.000</strong> ke rekening bank pengelola kos di bawah ini:
+          </p>
+
+          <div class="grid-3" style="gap: 16px;">
+            <div class="card" style="padding: 12px; background: #fff; border: 1px solid var(--color-divider);">
+              <span class="small muted" style="font-size: 11px;">Bank Tujuan:</span>
+              <strong style="display: block; font-size: 16px; color: var(--color-neutral-900); margin-top: 2px;">Bank BCA</strong>
+            </div>
+
+            <div class="card" style="padding: 12px; background: #fff; border: 1px solid var(--color-divider); position: relative;">
+              <span class="small muted" style="font-size: 11px;">Nomor Rekening:</span>
+              <strong id="rekNo" style="display: block; font-size: 18px; font-family: monospace; color: var(--color-neutral-900); margin-top: 2px;">
+                123-456-7890
+              </strong>
+            </div>
+
+            <div class="card" style="padding: 12px; background: #fff; border: 1px solid var(--color-divider);">
+              <span class="small muted" style="font-size: 11px;">Atas Nama:</span>
+              <strong style="display: block; font-size: 15px; color: var(--color-neutral-900); margin-top: 2px;">Pengelola KosFly</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- FORMULIR UNGGAH BUKTI TRANSFER BANK -->
+        <!-- FORM ACTION WILL LATER BECOME: action="{{ route('invoices.pay', $payment->invoice_number) }}" -->
+        <div style="border-top: 1px solid var(--color-divider); padding-top: 24px;">
+          <h3 style="font-size: 18px; font-weight: 800; margin: 0 0 8px; color: var(--color-neutral-900);">
+            Konfirmasi & Unggah Bukti Pembayaran
+          </h3>
+          <p class="small muted" style="margin: 0 0 16px;">
+            Setelah Anda menyelesaikan transfer, silakan unggah foto struk ATM, bukti m-Banking, atau tangkapan layar pembayaran di bawah ini:
+          </p>
+
+          <form method="POST" action="invoice.html" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 16px;">
+            
+            <div class="grid-2">
+              <div class="field">
+                <label for="method">Metode Pembayaran</label>
+                <select class="input" id="method" name="payment_method">
+                  <option value="bank_tf">Transfer Bank (BCA / Mandiri / BNI)</option>
+                  <option value="qris">QRIS Standar</option>
+                  <option value="cash">Tunai di Lokasi Kos</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="proof">Foto Bukti Transfer (JPG / PNG) <span class="text-accent">*</span></label>
+                <input class="input" type="file" id="proof" name="proof_image" accept="image/*" required>
+              </div>
+            </div>
+
+            <div>
+              <button type="button" class="btn btn-primary" style="font-size: 14px; font-weight: 700; padding: 10px 24px;">
+                Kirim Bukti Pembayaran &rarr;
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+      <!-- Tombol Aksi Bawah: Cetak & Kembali -->
+      <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center;">
+        <a href="rooms-public.html" class="btn btn-secondary">
+          &larr; Kembali ke Pilihan Kamar
+        </a>
+        <button onclick="window.print()" class="btn btn-ghost">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Cetak Dokumen Invoice
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ============================================================
+       3. FOOTER PUBLIK
+       ============================================================ -->
+  <footer class="site-foot" style="background: var(--color-neutral-900); color: #fff; padding: 40px 0; border-top: 1px solid var(--color-divider);">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+      <div class="brand" style="color: #fff;">
+        Kos<span class="brand-accent">Fly</span>
+      </div>
+      <p class="small" style="color: var(--color-neutral-400); margin: 0;">
+        &copy; 2026 KosFly. Manajemen Kos & Sewa Online Terpadu.
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -12,13 +12,20 @@
           <h2 class="page-title">Kelola Kamar</h2>
           <p class="page-sub">Kelola data kamar kos, harga, status, fasilitas, dan foto kamar.</p>
         </div>
-        <div class="flex head-actions">
-          <a href="{{ route('rooms.create') }}" class="btn btn-primary">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-            Tambah Kamar
-          </a>
-        </div>
+        @if(!auth()->user() || !auth()->user()->hasRole('owner'))
+          <div class="flex head-actions" style="gap: 8px;">
+            <a href="{{ route('facilities.index') }}" class="btn btn-secondary" title="Kelola Master Fasilitas">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><path d="M12 20h.01"/></svg>
+              Kelola Fasilitas
+            </a>
+            <a href="{{ route('rooms.create') }}" class="btn btn-primary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              Tambah Kamar
+            </a>
+          </div>
+        @endif
       </section>
+
 
       {{-- Flash message (session('success') / session('error')) --}}
       @if(session('success'))
@@ -38,12 +45,11 @@
            Bila dihitung di controller, ganti dengan variabel yang dikirim
            (mis. $stats['total'], $stats['kosong'], …). --}}
       @php
-        $roomList = $rooms instanceof \Illuminate\Pagination\AbstractPaginator ? $rooms->getCollection() : ($rooms ?? collect());
-        $statTotal   = $rooms instanceof \Illuminate\Pagination\AbstractPaginator ? $rooms->total() : $roomList->count();
-        $statKosong  = $roomList->where('status', 'occupied')->count();
-        $statTerisi  = $roomList->where('status', 'available')->count();
-        $statPerbaikan = $roomList->where('status', 'maintenance')->count();
-        $statLantai  = $roomList->pluck('floor')->unique()->count();
+        $statTotal     = $stats['total'] ?? $rooms->total();
+        $statKosong    = $stats['kosong'] ?? 0;
+        $statTerisi    = $stats['terisi'] ?? 0;
+        $statPerbaikan = $stats['perbaikan'] ?? 0;
+        $statLantai    = $stats['total_floor'] ?? 1;
       @endphp
       <section class="grid-4" aria-label="Statistik kamar">
         <div class="card elev-sm stat-card" style="border-top:2px solid var(--color-neutral-900)">
@@ -87,9 +93,9 @@
           </select>
           <select class="input" name="status" aria-label="Filter status">
             <option value="">Semua Status</option>
-            <option value="Kosong" @selected(request('status') === 'occupied')>Kosong</option>
-            <option value="Terisi" @selected(request('status') === 'available')>Terisi</option>
-            <option value="Perbaikan" @selected(request('status') === 'maintenance')>Perbaikan</option>
+            <option value="available" @selected(request('status') === 'available')>Kosong (Tersedia)</option>
+            <option value="occupied" @selected(request('status') === 'occupied')>Terisi</option>
+            <option value="maintenance" @selected(request('status') === 'maintenance')>Perbaikan</option>
           </select>
           <select class="input" name="is_active" aria-label="Filter status aktif">
             <option value="">Semua</option>
@@ -135,8 +141,15 @@
                   <td class="muted">Lantai {{ $room->floor }}</td>
                   <td>Rp {{ number_format($room->price, 0, ',', '.') }}<span class="muted small">/bln</span></td>
                   <td>
-                    <span class="tag {{ $room->status === 'available' ? 'tag-neutral' : ($room->status === 'occupied' ? 'tag-accent' : 'tag-outline') }}">{{ $room->status }}</span>
+                    @if($room->status === 'available')
+                      <span class="tag tag-outline">Kosong</span>
+                    @elseif($room->status === 'occupied')
+                      <span class="tag tag-accent">Terisi</span>
+                    @else
+                      <span class="tag tag-neutral">Perbaikan</span>
+                    @endif
                   </td>
+
                   <td>
                     @if($room->is_active)
                       <span class="tag tag-neutral">Aktif</span>
@@ -163,14 +176,17 @@
                       <a class="btn btn-secondary" href="{{ route('rooms.show', $room) }}" title="Detail">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
                       </a>
-                      <a class="btn btn-secondary" href="{{ route('rooms.edit', $room) }}" title="Edit">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
-                      </a>
-                      <button type="button" class="btn btn-ghost" data-action="room-delete-open"
-                              data-url="{{ route('rooms.destroy', $room) }}" data-name="{{ $room->room_number }}" title="Hapus">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></svg>
-                      </button>
+                      @if(!auth()->user() || !auth()->user()->hasRole('owner'))
+                        <a class="btn btn-secondary" href="{{ route('rooms.edit', $room) }}" title="Edit">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
+                        </a>
+                        <button type="button" class="btn btn-ghost" data-action="room-delete-open"
+                                data-url="{{ route('rooms.destroy', $room) }}" data-name="{{ $room->room_number }}" title="Hapus">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></svg>
+                        </button>
+                      @endif
                     </div>
+
                   </td>
                 </tr>
               @empty

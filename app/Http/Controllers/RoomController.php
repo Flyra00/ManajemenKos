@@ -6,20 +6,47 @@ use App\Models\Room;
 use App\Models\Facility;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class RoomController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-        $rooms = Room::with('facilities')
-        ->latest()
-        ->paginate(10);
+        $query = Room::with(['facilities', 'activeLease.tenant.user'])->latest();
 
-        return view('rooms.index', compact('rooms'));
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('room_number', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        if ($floor = $request->input('floor')) {
+            $query->where('floor', $floor);
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        if ($request->filled('is_active')) {
+            $query->where('is_active', (bool) $request->input('is_active'));
+        }
+
+        $rooms = $query->paginate(10)->withQueryString();
+
+        $stats = [
+            'total'       => Room::count(),
+            'kosong'      => Room::where('status', 'available')->count(),
+            'terisi'      => Room::where('status', 'occupied')->count(),
+            'perbaikan'   => Room::where('status', 'maintenance')->count(),
+            'total_floor' => Room::distinct('floor')->whereNotNull('floor')->count('floor') ?: 1,
+        ];
+
+        return view('rooms.index', compact('rooms', 'stats'));
     }
 
     /**
@@ -27,8 +54,7 @@ class RoomController extends Controller
      */
     public function create()
     {
-
-        $facilities = facility::all();
+        $facilities = Facility::all();
         return view('rooms.create', compact('facilities'));
     }
 
@@ -37,77 +63,71 @@ class RoomController extends Controller
      */
     public function store(Request $request)
     {
-        //
         $validated = $request->validate([
             'room_number' => [
                 'required',
-                'unique:rooms,room_number'
+                'string',
+                'max:20',
+                'unique:rooms,room_number',
             ],
-
-            'floor'=> [
+            'floor' => [
+                'nullable',
+                'string',
+                'max:10',
+            ],
+            'price' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+            'status' => [
+                'required',
+                'in:available,occupied,maintenance',
+            ],
+            'is_active' => [
+                'nullable',
+                'boolean',
+            ],
+            'description' => [
                 'nullable',
                 'string',
             ],
-
-            'price' =>[
-                'required',
-                'numeric'
-            ],
-
-            'status'=> [
-                'required',
-            ],
-
-            'description' => [
-                'nullable',
-                'string'
-            ],
-
-            'image'=> [
+            'image' => [
                 'nullable',
                 'image',
                 'max:2048',
             ],
-
-            'facilities'=> [
+            'facilities' => [
                 'nullable',
-                'array'
+                'array',
             ],
-
-            'facilities.*'=> [
+            'facilities.*' => [
                 'exists:facilities,id',
             ],
         ]);
 
-        //upload img
-        $imagePath  = null;
-
+        $imagePath = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request
-            ->file('image')
-            ->store('room','public');
+            $imagePath = $request->file('image')->store('rooms', 'public');
         }
 
-        //create room
         $room = Room::create([
             'room_number' => $validated['room_number'],
-            'floor' => $validated['floor'] ?? null,
-            'price' => $validated['price'],
-            'status' => $validated['status'],
-            'is_active' => true,
+            'floor'       => $validated['floor'] ?? null,
+            'price'       => $validated['price'],
+            'status'      => $validated['status'],
+            'is_active'   => $request->boolean('is_active', true),
             'description' => $validated['description'] ?? null,
-            'image' => $imagePath,
+            'image'       => $imagePath,
         ]);
 
-        //simpan fasilitas
-        if($request->facilities){
-            $room->facilities()
-            ->sync($request->facilities);
+        if (!empty($validated['facilities'])) {
+            $room->facilities()->sync($validated['facilities']);
         }
 
         return redirect()
-        ->route('rooms.index')
-        ->with('success','kamar berhasil ditambah');
+            ->route('rooms.index')
+            ->with('success', 'Kamar berhasil ditambahkan');
     }
 
     /**
@@ -115,8 +135,7 @@ class RoomController extends Controller
      */
     public function show(Room $room)
     {
-        //
-        $room->load('facilities');
+        $room->load(['facilities', 'leases.tenant.user', 'maintenanceRequests']);
         return view('rooms.show', compact('room'));
     }
 
@@ -125,15 +144,10 @@ class RoomController extends Controller
      */
     public function edit(Room $room)
     {
-        //
         $facilities = Facility::all();
         $room->load('facilities');
 
-        return view('rooms.edit',compact(
-            'room',
-            'facilities'
-        ));
-
+        return view('rooms.edit', compact('room', 'facilities'));
     }
 
     /**
@@ -141,82 +155,74 @@ class RoomController extends Controller
      */
     public function update(Request $request, Room $room)
     {
-        //
-        $request->validate([
+        $validated = $request->validate([
             'room_number' => [
                 'required',
-                'unique:rooms,room_number,'.$room->id
+                'string',
+                'max:20',
+                Rule::unique('rooms', 'room_number')->ignore($room->id),
             ],
-
-            'floor'=> [
+            'floor' => [
+                'nullable',
+                'string',
+                'max:10',
+            ],
+            'price' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+            'status' => [
+                'required',
+                'in:available,occupied,maintenance',
+            ],
+            'is_active' => [
+                'nullable',
+                'boolean',
+            ],
+            'description' => [
                 'nullable',
                 'string',
             ],
-
-            'price' =>[
-                'required',
-                'numeric'
-            ],
-
-            'status'=> [
-                'required',
-            ],
-
-            'description' => [
-                'nullable',
-                'string'
-            ],
-
-            'image'=> [
+            'image' => [
                 'nullable',
                 'image',
                 'max:2048',
             ],
-
-            'facilities'=> [
+            'facilities' => [
                 'nullable',
-                'array'
+                'array',
             ],
-
-            'facilities.*'=> [
+            'facilities.*' => [
                 'exists:facilities,id',
             ],
         ]);
-                //upload img
-        $imagePath  = $room->image;
+
+        $imagePath = $room->image;
 
         if ($request->hasFile('image')) {
-
-            if($room->image) {
-                Storage::disk('public')
-                ->delete($room->image);
+            if ($room->image && Storage::disk('public')->exists($room->image)) {
+                Storage::disk('public')->delete($room->image);
             }
 
-
-            $imagePath = $request
-            ->file('image')
-            ->store('room','public');
+            $imagePath = $request->file('image')->store('rooms', 'public');
         }
 
-        //updt room
-        $room ->update([
-            'room_number' => $request->room_number,
-            'floor' => $request->floor,
-            'price' => $request->price,
-            'status'=> $request->status,
-            'description'=> $request->description,
-            'image'=> $imagePath,
+        $room->update([
+            'room_number' => $validated['room_number'],
+            'floor'       => $validated['floor'] ?? null,
+            'price'       => $validated['price'],
+            'status'      => $validated['status'],
+            'is_active'   => $request->boolean('is_active', true),
+            'description' => $validated['description'] ?? null,
+            'image'       => $imagePath,
         ]);
 
-        //simpan fasilitas
-
-        $room -> facilities()
-            ->sync($request->facilities ?? []);
-
+        $room->facilities()->sync($request->input('facilities', []));
 
         return redirect()
-        ->route('rooms.index')
-        ->with('success','kamar berhasil diperbarui');
+            ->route('rooms.index')
+            ->with('success', 'Kamar berhasil diperbarui');
     }
 
     /**
@@ -224,15 +230,28 @@ class RoomController extends Controller
      */
     public function destroy(Room $room)
     {
-        //
-        if($room->image){
+        if ($room->activeLease()->exists()) {
+            return redirect()
+                ->route('rooms.index')
+                ->with('error', 'Tidak dapat menghapus kamar yang masih memiliki kontrak sewa aktif.');
+        }
+
+        if ($room->maintenanceRequests()->whereIn('status', ['reported', 'in_progress'])->exists()) {
+            return redirect()
+                ->route('rooms.index')
+                ->with('error', 'Tidak dapat menghapus kamar yang sedang dalam proses perbaikan/maintenance.');
+        }
+
+        if ($room->image && Storage::disk('public')->exists($room->image)) {
             Storage::disk('public')->delete($room->image);
         }
 
+        $room->facilities()->detach();
         $room->delete();
 
         return redirect()
-        ->route('rooms.index')
-        ->with('success','kamar berhasil di hapus');
+            ->route('rooms.index')
+            ->with('success', 'Kamar berhasil dihapus');
     }
 }
+

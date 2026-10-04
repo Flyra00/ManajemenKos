@@ -47,6 +47,16 @@
             @endif
         </div>
 
+        @if($user->tenant)
+            <div>
+                <x-input-label for="ktp_number" value="Nomor KTP (NIK Pribadi)" />
+                <x-text-input id="ktp_number" type="text" class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 font-mono text-gray-700 dark:text-gray-300" :value="$user->tenant->ktp_number" readonly />
+                <p class="text-xs text-gray-500 mt-1">
+                    Nomor identitas KTP Anda dilindungi hak privasi dan tidak ditampilkan kepada publik atau admin.
+                </p>
+            </div>
+        @endif
+
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
 

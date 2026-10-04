@@ -2,31 +2,42 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Facility;
-
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class FacilityController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-        $facilities = Facility::latest()
-        ->paginate(10);
-        return view("facilities.index", compact("facilities"));
+        $query = Facility::withCount('rooms')->latest();
+
+        if ($search = $request->input('search')) {
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+        }
+
+        $facilities = $query->paginate(10)->withQueryString();
+
+        $stats = [
+            'total'      => Facility::count(),
+            'used'       => Facility::has('rooms')->count(),
+            'assignments'=> \Illuminate\Support\Facades\DB::table('room_facilities')->count(),
+        ];
+
+        return view('facilities.index', compact('facilities', 'stats'));
     }
+
 
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        //
-        $facilities = Facility::all();
-        return view("facilities.create", compact("facility"));
+        return view("facilities.create");
     }
 
     /**
@@ -34,16 +45,16 @@ class FacilityController extends Controller
      */
     public function store(Request $request)
     {
-        //
         $validated = $request->validate([
-            'name' => 'unique',
-            'description'=> 'nulllable',
+            'name' => ['required', 'string', 'max:255', 'unique:facilities,name'],
+            'description' => ['nullable', 'string'],
         ]);
 
         Facility::create($validated);
+
         return redirect()
-        ->route('facilities.index')
-        ->with('success','fasilitas berhasil ditambah');
+            ->route('facilities.index')
+            ->with('success', 'Fasilitas berhasil ditambah');
     }
 
     /**
@@ -51,18 +62,16 @@ class FacilityController extends Controller
      */
     public function show(Facility $facility)
     {
-        //
+        $facility->loadCount('rooms')->load('rooms');
         return view('facilities.show', compact('facility'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Request $request, Facility $facility)
+    public function edit(Facility $facility)
     {
-        //
         return view('facilities.edit', compact('facility'));
-
     }
 
     /**
@@ -70,18 +79,16 @@ class FacilityController extends Controller
      */
     public function update(Request $request, Facility $facility)
     {
-        //
-        $facilities = Facility::all();
         $validated = $request->validate([
-            'name'=>['required','string'],
-            'description'=> ['nullable','string'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('facilities', 'name')->ignore($facility->id)],
+            'description' => ['nullable', 'string'],
         ]);
 
-        Facility::updated($validated);
+        $facility->update($validated);
 
         return redirect()
-        ->route('facilities')
-        ->with('success','fasilitas berhasil diperbarui');
+            ->route('facilities.index')
+            ->with('success', 'Fasilitas berhasil diperbarui');
     }
 
     /**
@@ -89,11 +96,11 @@ class FacilityController extends Controller
      */
     public function destroy(Facility $facility)
     {
-        //
         $facility->delete();
 
         return redirect()
-        ->route('facilities.index')
-        ->with('success','fasilitas berhasil dihapus');
+            ->route('facilities.index')
+            ->with('success', 'Fasilitas berhasil dihapus');
     }
 }
+

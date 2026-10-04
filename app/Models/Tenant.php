@@ -7,26 +7,33 @@ use Illuminate\Database\Eloquent\Model;
 class Tenant extends Model
 {
     //
-    protected $fillable=[
+    protected $fillable = [
         'user_id',
         'ktp_number',
         'emergency_name',
+        'emergency_contact',
         'emergency_phone',
         'job',
     ];
-
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function leases(){
+    public function leases()
+    {
         return $this->hasMany(Lease::class);
+    }
+
+    public function activeLease()
+    {
+        return $this->hasOne(Lease::class)->where('status', 'active')->latestOfMany();
     }
 
     public function maintenanceRequests()
     {
         return $this->hasMany(MaintenanceRequest::class);
     }
+
 }

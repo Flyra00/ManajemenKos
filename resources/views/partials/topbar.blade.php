@@ -21,24 +21,27 @@
           <div class="notif-menu" id="notifMenu"></div>
         </div>
 
-        <!-- Profil user (dummy: Admin KosFly) -->
+        <!-- Profil user dinamis -->
         <div class="userchip" id="userChip" data-action="toggle-user">
-          <div class="avatar" id="userAvatar">AK</div>
+          <div class="avatar" id="userAvatar">{{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 2)) }}</div>
           <div class="user-meta">
-            <b id="userName">Admin KosFly</b>
-            <span id="userRole">Admin</span>
+            <b id="userName">{{ auth()->user()->name ?? 'Pengguna' }}</b>
+            <span id="userRole">{{ ucfirst(auth()->user()->roles->first()?->name ?? 'Pengelola') }}</span>
           </div>
           <span class="user-caret">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
           </span>
           <div class="user-menu" id="userMenu">
-            <a href="profile.html">Profil</a>
-            <a href="settings.html">Pengaturan</a>
+            <a href="{{ route('profile.edit') }}">Profil Akun</a>
+            @if(auth()->check() && !auth()->user()->hasRole('tenant') && !auth()->user()->hasRole('staff'))
+              <a href="{{ route('settings.index') }}">Pengaturan</a>
+            @endif
             <form method="POST" action="{{ route('logout') }}">
-            @csrf
-                <button type="submit" href="route('logout')"> Keluar</button>
+              @csrf
+              <button type="submit">Keluar</button>
             </form>
           </div>
         </div>
       </div>
+
     </header>

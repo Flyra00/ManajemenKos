@@ -42,6 +42,19 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'tenant', 'guard_name' => 'web']);
+        $user->assignRole('tenant');
+
+        \App\Models\Tenant::firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'ktp_number'        => 'KTP-' . $user->id . '-' . time(),
+                'emergency_name'    => $user->name,
+                'emergency_contact' => '-',
+                'job'               => 'Penyewa Kos',
+            ]
+        );
+
         event(new Registered($user));
 
         Auth::login($user);

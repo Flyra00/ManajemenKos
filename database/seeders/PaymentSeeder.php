@@ -26,7 +26,7 @@ class PaymentSeeder extends Seeder
 
             'status' => 'paid',
 
-            'proof_image' => 'payments/bukti-transfer.jpg',
+            'proof_img' => 'payments/bukti-transfer.jpg',
 
             'verified_by' => 1,
 

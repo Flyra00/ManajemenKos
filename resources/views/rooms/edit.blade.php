@@ -14,6 +14,10 @@
           <h2 class="page-title">Edit Kamar {{ $room->room_number }}</h2>
           <p class="page-sub">Perbarui data kamar kos, harga, status, fasilitas, dan foto kamar.</p>
         </div>
+        <div class="flex head-actions" style="gap: 8px;">
+          <a href="{{ route('rooms.index') }}" class="btn btn-secondary">Batal</a>
+          <button type="submit" form="room-edit-form" class="btn btn-primary">Simpan Perubahan</button>
+        </div>
       </section>
 
       {{-- Ringkasan error validasi (Laravel Validation) --}}
@@ -24,7 +28,7 @@
         </div>
       @endif
 
-      <form method="POST" action="{{ route('rooms.update', $room) }}" enctype="multipart/form-data" novalidate>
+      <form id="room-edit-form" method="POST" action="{{ route('rooms.update', $room) }}" enctype="multipart/form-data" novalidate>
         @csrf
         @method('PATCH')
 
@@ -70,10 +74,11 @@
               <div class="field">
                 <label for="status">Status</label>
                 <select class="input @error('status') is-invalid @enderror" id="status" name="status">
-                  <option value="occupied" @selected(old('status', $room->status) === 'occupied')>Kosong</option>
-                  <option value="available" @selected(old('status', $room->status) === 'available')>Terisi</option>
+                  <option value="available" @selected(old('status', $room->status) === 'available')>Kosong (Tersedia)</option>
+                  <option value="occupied" @selected(old('status', $room->status) === 'occupied')>Terisi</option>
                   <option value="maintenance" @selected(old('status', $room->status) === 'maintenance')>Perbaikan</option>
                 </select>
+
                 @error('status')
                   <p class="form-error">{{ $message }}</p>
                 @enderror
@@ -91,7 +96,12 @@
               </div>
             </div>
 
-            <h3 class="form-section-title">Fasilitas</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; margin-bottom: 8px;">
+              <h3 class="form-section-title" style="margin: 0;">Fasilitas</h3>
+              <a href="{{ route('facilities.index') }}" target="_blank" class="small text-accent" style="text-decoration: underline; font-weight: 500;" title="Buka kelola fasilitas di tab baru">
+                + Kelola Fasilitas
+              </a>
+            </div>
             <div class="field">
               <div class="chk-grid">
                 {{-- Fasilitas existing diberi checked via $room->facilities->contains() --}}
@@ -137,7 +147,14 @@
               @endif
             </div>
 
-            <div class="img-upload-actions">
+            @if($room->image)
+              <div style="margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(34, 197, 94, 0.1); color: #16a34a; border-radius: 6px; font-size: 11px; font-weight: 600;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Foto Saat Ini Tersimpan
+              </div>
+            @endif
+
+            <div class="img-upload-actions" style="margin-top: 10px;">
               <label class="btn btn-secondary" for="image" role="button" tabindex="0" title="Pilih gambar kamar">Ganti Gambar</label>
               <button type="button" class="btn btn-ghost" id="photoRemove" data-action="room-photo-remove" {{ $room->image ? '' : 'hidden' }}>Hapus Foto</button>
             </div>

@@ -1,0 +1,308 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Facility;
+use App\Models\Payment;
+use App\Models\Room;
+use App\Models\User;
+use Database\Seeders\RoleSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
+use Tests\TestCase;
+
+class TenantBookingTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(RoleSeeder::class);
+        Storage::fake('public');
+    }
+
+    public function test_public_user_can_view_available_rooms_catalog(): void
+    {
+        $availableRoom = Room::create([
+            'room_number' => 'A-01',
+            'floor'       => 1,
+            'price'       => 1500000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $occupiedRoom = Room::create([
+            'room_number' => 'B-02',
+            'floor'       => 2,
+            'price'       => 1800000,
+            'status'      => 'occupied',
+            'is_active'   => true,
+        ]);
+
+        $response = $this->get(route('public.rooms.index'));
+
+        $response->assertOk();
+        $response->assertSee('A-01');
+        $response->assertSee('1.500.000');
+        // Kamar yang terisi tidak boleh muncul di katalog sewa publik
+        $response->assertDontSee('B-02');
+    }
+
+    public function test_public_user_can_view_room_detail(): void
+    {
+        $facility = Facility::create(['name' => 'Kamar Mandi Dalam']);
+
+        $room = Room::create([
+            'room_number' => 'C-03',
+            'floor'       => 1,
+            'price'       => 1600000,
+            'status'      => 'available',
+            'is_active'   => true,
+            'description' => 'Kamar luas dan bersih',
+        ]);
+        $room->facilities()->attach($facility);
+
+        $response = $this->get(route('public.rooms.show', $room));
+
+        $response->assertOk();
+        $response->assertSee('Kamar C-03');
+        $response->assertSee('Kamar Mandi Dalam');
+        $response->assertSee('Formulir Sewa Kamar');
+    }
+
+    public function test_guest_can_book_room_and_receive_invoice_with_24h_due_date(): void
+    {
+        $room = Room::create([
+            'room_number' => 'D-04',
+            'floor'       => 2,
+            'price'       => 1700000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $response = $this->post(route('public.rooms.book', $room), [
+            'name'            => 'Ahmad Dani',
+            'email'           => 'dani@example.com',
+            'phone'           => '081234567899',
+            'password'        => 'password123',
+            'start_date'      => now()->toDateString(),
+            'duration_months' => 1,
+        ]);
+
+        // Harus dibuat user tenant
+        $this->assertDatabaseHas('users', [
+            'email' => 'dani@example.com',
+            'name'  => 'Ahmad Dani',
+        ]);
+
+        $user = User::where('email', 'dani@example.com')->first();
+        $this->assertTrue($user->hasRole('tenant'));
+
+        // Harus ada lease pending
+        $this->assertDatabaseHas('leases', [
+            'room_id' => $room->id,
+            'status'  => 'pending',
+        ]);
+
+        // Harus terbit invoice dengan tenggat 1x24 jam
+        $payment = Payment::latest()->first();
+        $this->assertNotNull($payment);
+        $this->assertEquals(1700000, $payment->amount);
+        $this->assertEquals('unpaid', $payment->status);
+        $this->assertEquals(now()->addDay()->toDateString(), $payment->due_date->toDateString());
+
+        $response->assertRedirect($payment->public_url);
+    }
+
+    public function test_tenant_can_upload_payment_proof_to_invoice(): void
+    {
+        $room = Room::create([
+            'room_number' => 'E-05',
+            'floor'       => 1,
+            'price'       => 1500000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $this->post(route('public.rooms.book', $room), [
+            'name'            => 'Bambang',
+            'email'           => 'bambang@example.com',
+            'phone'           => '081233344455',
+            'password'        => 'password123',
+            'start_date'      => now()->toDateString(),
+            'duration_months' => 1,
+        ]);
+
+        $payment = Payment::latest()->first();
+
+        $file = UploadedFile::fake()->image('bukti_transfer.jpg');
+
+        $response = $this->post(URL::signedRoute('invoices.pay', ['invoice_number' => $payment->invoice_number]), [
+            'payment_method' => 'bank_tf',
+            'proof_image'    => $file,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $payment->refresh();
+        $this->assertEquals('pending', $payment->status);
+        $this->assertNotNull($payment->proof_img);
+        Storage::disk('public')->assertExists($payment->proof_img);
+    }
+
+    public function test_tenant_can_pay_using_qris(): void
+    {
+        $room = Room::create([
+            'room_number' => 'QRIS-01',
+            'floor'       => 1,
+            'price'       => 1500000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $this->post(route('public.rooms.book', $room), [
+            'name'            => 'Sari QRIS',
+            'email'           => 'sari@example.com',
+            'phone'           => '081233344499',
+            'password'        => 'password123',
+            'start_date'      => now()->toDateString(),
+            'duration_months' => 1,
+        ]);
+
+        $payment = Payment::latest()->first();
+        $this->assertEquals('pending', $payment->lease->status);
+
+        $file = UploadedFile::fake()->image('bukti_qris.jpg');
+
+        $response = $this->post(URL::signedRoute('invoices.pay', ['invoice_number' => $payment->invoice_number]), [
+            'payment_method' => 'qris',
+            'proof_image'    => $file,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $payment->refresh();
+        $this->assertEquals('qris', $payment->payment_method);
+        $this->assertEquals('pending', $payment->status);
+    }
+
+    public function test_admin_can_verify_payment_and_room_becomes_occupied(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $room = Room::create([
+            'room_number' => 'F-06',
+            'floor'       => 1,
+            'price'       => 1500000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $this->post(route('public.rooms.book', $room), [
+            'name'            => 'Citra Kirana',
+            'email'           => 'citra@example.com',
+            'phone'           => '081299887766',
+            'password'        => 'password123',
+            'start_date'      => now()->toDateString(),
+            'duration_months' => 1,
+        ]);
+
+        $payment = Payment::latest()->first();
+        $this->assertEquals('available', $room->fresh()->status);
+        $this->assertEquals('pending', $payment->lease->fresh()->status);
+
+        // Admin memverifikasi pembayaran lunas
+        $response = $this->actingAs($admin)->put(route('payments.verify', $payment));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        // Status kamar harus resmi menjadi occupied
+        $this->assertEquals('occupied', $room->fresh()->status);
+        // Kontrak sewa aktif
+        $this->assertEquals('active', $payment->lease->fresh()->status);
+        // Pembayaran berstatus paid
+        $this->assertEquals('paid', $payment->fresh()->status);
+        $this->assertEquals($admin->id, $payment->fresh()->verified_by);
+    }
+
+    public function test_booking_fails_gracefully_when_phone_is_already_registered_to_another_user(): void
+    {
+        // Pengguna lama yang sudah punya nomor HP ini
+        User::factory()->create([
+            'email' => 'dafa@gmail.com',
+            'phone' => '081317465707',
+        ]);
+
+        $room = Room::create([
+            'room_number' => 'G-07',
+            'floor'       => 1,
+            'price'       => 1500000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        // Calon penyewa baru dengan email berbeda mencoba menggunakan nomor HP yang sama
+        $response = $this->post(route('public.rooms.book', $room), [
+            'name'            => 'DIMASSALIM',
+            'email'           => 'dimas@gmail.com',
+            'phone'           => '081317465707',
+            'password'        => 'password123',
+            'start_date'      => now()->toDateString(),
+            'duration_months' => 1,
+        ]);
+
+        $response->assertSessionHasErrors(['phone']);
+        $this->assertDatabaseMissing('users', ['email' => 'dimas@gmail.com']);
+    }
+
+    public function test_invoice_status_endpoint_returns_realtime_verification_status(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $room = Room::create([
+            'room_number' => 'H-08',
+            'floor'       => 1,
+            'price'       => 1500000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $this->post(route('public.rooms.book', $room), [
+            'name'            => 'Eko Santoso',
+            'email'           => 'eko@example.com',
+            'phone'           => '081234112233',
+            'password'        => 'password123',
+            'start_date'      => now()->toDateString(),
+            'duration_months' => 1,
+        ]);
+
+        $payment = Payment::latest()->first();
+
+        // 1. Cek sebelum verifikasi (status: pending/unpaid)
+        $statusUrl = URL::signedRoute('invoices.status', ['invoice_number' => $payment->invoice_number]);
+        $response = $this->getJson($statusUrl);
+        $response->assertOk()
+            ->assertJson([
+                'is_paid' => false,
+            ]);
+
+        // 2. Admin memverifikasi pembayaran
+        $this->actingAs($admin)->put(route('payments.verify', $payment));
+
+        // 3. Cek kembali secara real-time via endpoint status
+        $responseAfter = $this->getJson($statusUrl);
+        $responseAfter->assertOk()
+            ->assertJson([
+                'status'  => 'paid',
+                'is_paid' => true,
+            ]);
+    }
+}

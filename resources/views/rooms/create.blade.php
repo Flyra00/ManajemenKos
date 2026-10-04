@@ -14,6 +14,10 @@
           <h2 class="page-title">Tambah Kamar</h2>
           <p class="page-sub">Lengkapi data kamar kos, harga, status, fasilitas, dan foto kamar.</p>
         </div>
+        <div class="flex head-actions" style="gap: 8px;">
+          <a href="{{ route('rooms.index') }}" class="btn btn-secondary">Batal</a>
+          <button type="submit" form="room-form" class="btn btn-primary">Simpan Kamar</button>
+        </div>
       </section>
 
       {{-- Ringkasan error validasi (Laravel Validation) --}}
@@ -24,7 +28,7 @@
         </div>
       @endif
 
-      <form method="POST" action="{{ route('rooms.store') }}" enctype="multipart/form-data" novalidate>
+      <form id="room-form" method="POST" action="{{ route('rooms.store') }}" enctype="multipart/form-data" novalidate>
         @csrf
 
         <div class="form-layout">
@@ -69,10 +73,11 @@
               <div class="field">
                 <label for="status">Status</label>
                 <select class="input @error('status') is-invalid @enderror" id="status" name="status">
-                  <option value="occupied" @selected(old('status') === 'occupied')>Kosong</option>
-                  <option value="available" @selected(old('status') === 'available')>Terisi</option>
+                  <option value="available" @selected(old('status', 'available') === 'available')>Kosong (Tersedia)</option>
+                  <option value="occupied" @selected(old('status') === 'occupied')>Terisi</option>
                   <option value="maintenance" @selected(old('status') === 'maintenance')>Perbaikan</option>
                 </select>
+
                 @error('status')
                   <p class="form-error">{{ $message }}</p>
                 @enderror
@@ -90,7 +95,12 @@
               </div>
             </div>
 
-            <h3 class="form-section-title">Fasilitas</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; margin-bottom: 8px;">
+              <h3 class="form-section-title" style="margin: 0;">Fasilitas</h3>
+              <a href="{{ route('facilities.index') }}" target="_blank" class="small text-accent" style="text-decoration: underline; font-weight: 500;" title="Buka kelola fasilitas di tab baru">
+                + Kelola Fasilitas
+              </a>
+            </div>
             <div class="field">
               <div class="chk-grid">
                 {{-- Daftar fasilitas dari backend: @foreach($facilities as $facility) --}}

@@ -18,13 +18,12 @@ return new class extends Migration
             ->unique()
             ->constrained()
             ->cascadeOnDelete();
-            
-            $table->string('ktp_number')->unique;
+            $table->string('ktp_number')->unique();
 
-            $table->string('emergency_name')->nullable;
-            $table->string('emergency_contact')->nullable;
+            $table->string('emergency_name')->nullable();
+            $table->string('emergency_contact')->nullable();
 
-            $table->string('job')->nullable;
+            $table->string('job')->nullable();
 
             $table->timestamps();
         });

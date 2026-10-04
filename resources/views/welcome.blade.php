@@ -3,34 +3,170 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KosFly — Manajemen Kos Lebih Mudah</title>
-  <meta name="description" content="KosFly adalah platform manajemen kos: kelola kamar, penghuni, kontrak, pembayaran, pengeluaran, dan laporan dalam satu dashboard.">
+  <title>{{ $kosSettings['name'] ?? 'KosFly Residence' }} — Sewa Kamar Kos Nyaman &amp; Modern</title>
+  <meta name="description" content="Temukan dan sewa kamar kos impian Anda di {{ $kosSettings['name'] ?? 'KosFly Residence' }}. Fasilitas lengkap, kamar siap huni, AC, WiFi cepat, dan booking online mudah.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="{{ asset('style.css') }}">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  @vite(['resources/css/app.css'])
+  <style>
+    /* Styling tenang & elegan sesuai design system asli KosFly */
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: var(--color-surface);
+      color: var(--color-neutral-800);
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      border: 1px solid var(--color-divider);
+      letter-spacing: 0.5px;
+    }
+    .trust-stat-card {
+      background: #ffffff;
+      border: 1px solid var(--color-divider);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .trust-stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+    }
+    .room-card-public {
+      background: #ffffff;
+      border: 1px solid var(--color-divider);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .room-card-public:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      border-color: var(--color-neutral-400);
+    }
+    .amenity-card {
+      background: #ffffff;
+      border: 1px solid var(--color-divider);
+      border-radius: 8px;
+      padding: 22px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      transition: transform 0.2s ease;
+    }
+    .amenity-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+    }
+    .step-card {
+      background: #ffffff;
+      border: 1px solid var(--color-divider);
+      border-radius: 8px;
+      padding: 26px 20px;
+      text-align: center;
+      position: relative;
+    }
+    .step-number {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--color-neutral-900);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      margin: 0 auto 14px;
+    }
+    .faq-item {
+      background: #ffffff;
+      border: 1px solid var(--color-divider);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .faq-question {
+      padding: 16px 20px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+    .faq-answer {
+      padding: 0 20px 16px;
+      color: var(--color-neutral-700);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* Floating WhatsApp Button: Putih Bersih dengan Logo WhatsApp */
+    .wa-float-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 52px;
+      height: 52px;
+      background: #ffffff;
+      color: #25d366;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      z-index: 999;
+      text-decoration: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .wa-float-btn:hover {
+      transform: translateY(-3px) scale(1.06);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+      color: #16a34a;
+      background: #ffffff;
+    }
+  </style>
 </head>
+
 <body class="public-page">
 
   <!-- ===================== NAVBAR ===================== -->
   <header class="site-nav">
     <div class="container">
-      <a class="brand" href="index.html" aria-label="KosFly — Beranda">
+      <a class="brand" href="{{ route('home') }}" aria-label="KosFly — Beranda">
         <span class="brand-mark">K</span>
         Kos<span class="brand-accent">Fly</span>
       </a>
 
       <nav aria-label="Navigasi utama">
         <ul class="nav-links">
-          <li><a href="#beranda">Beranda</a></li>
-          <li><a href="#fitur">Fitur</a></li>
-          <li><a href="#tentang">Tentang</a></li>
+          <li><a href="#kamar-tersedia">Kamar Tersedia</a></li>
+          <li><a href="{{ route('public.rooms.index') }}">Katalog Kamar</a></li>
+          <li><a href="#fasilitas">Fasilitas</a></li>
+          <li><a href="#cara-sewa">Cara Sewa</a></li>
+          <li><a href="#lokasi">Lokasi</a></li>
+          <li><a href="#faq">FAQ</a></li>
         </ul>
       </nav>
 
       <div class="nav-cta">
-        <a class="btn btn-secondary btn-sm" href="{{ route('login') }}">Masuk</a>
-        <a class="btn btn-primary btn-sm" href="{{ route('register') }}">Daftar</a>
+        @auth
+          <a class="btn btn-primary btn-sm" href="{{ route('dashboard') }}">Dashboard Saya</a>
+        @else
+          <a class="btn btn-secondary btn-sm" href="{{ route('login') }}">Masuk</a>
+          <a class="btn btn-primary btn-sm" href="{{ route('register') }}">Daftar</a>
+        @endauth
         <button class="hamburger" id="navToggle" aria-label="Buka menu" aria-controls="navDrawer" aria-expanded="false">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg>
         </button>
@@ -40,490 +176,530 @@
 
   <!-- Drawer mobile -->
   <aside class="nav-drawer" id="navDrawer" aria-label="Menu mobile">
-    <a class="brand" href="index.html">
-      <span class="brand-mark">K</span>
-      Kos<span class="brand-accent">Fly</span>
-    </a>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md, 16px);">
+      <a class="brand" href="{{ route('home') }}" style="margin: 0;">
+        <span class="brand-mark">K</span>
+        Kos<span class="brand-accent">Fly</span>
+      </a>
+      <button type="button" id="navClose" class="hamburger" aria-label="Tutup menu" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
     <nav aria-label="Navigasi mobile">
-      <a class="drawer-link" href="#beranda">Beranda
+      <a class="drawer-link" href="#kamar-tersedia">Kamar Tersedia
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
       </a>
-      <a class="drawer-link" href="#fitur">Fitur
+      <a class="drawer-link" href="{{ route('public.rooms.index') }}">Katalog Kamar
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
       </a>
-      <a class="drawer-link" href="#tentang">Tentang
+      <a class="drawer-link" href="#fasilitas">Fasilitas
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+      <a class="drawer-link" href="#cara-sewa">Cara Sewa
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+      <a class="drawer-link" href="#lokasi">Lokasi
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+      <a class="drawer-link" href="#faq">FAQ
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
       </a>
     </nav>
     <div class="drawer-cta">
-      <a class="btn btn-secondary btn-block" href="{{ route('login') }}">Masuk</a>
-      <a class="btn btn-primary btn-block" href="{{ route('register') }}">Daftar Gratis</a>
+      @auth
+        <a class="btn btn-primary btn-block" href="{{ route('dashboard') }}">Buka Dashboard Saya</a>
+      @else
+        <a class="btn btn-secondary btn-block" href="{{ route('login') }}">Masuk</a>
+        <a class="btn btn-primary btn-block" href="{{ route('register') }}">Daftar Akun Baru</a>
+      @endauth
     </div>
   </aside>
-  <div class="nav-backdrop" aria-hidden="true"></div>
+  <div class="nav-backdrop" id="navBackdrop" aria-hidden="true"></div>
 
   <main id="beranda">
 
-    <!-- ===================== HERO ===================== -->
-    <section class="hero">
+    <!-- ===================== HERO SECTION ===================== -->
+    <section class="hero" style="padding: 50px 0 60px;">
       <div class="container hero-grid">
         <div>
-          <h1>Kelola Kos Lebih Mudah<br>dengan <span class="accent">KosFly</span></h1>
-          <p class="hero-lead">Kelola kamar, penghuni, kontrak, pembayaran, pengeluaran, dan laporan kos dalam satu platform.</p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="{{ route('register') }}">Mulai Sekarang</a>
-            <a class="btn btn-secondary" href="{{ route('login') }}">Masuk</a>
+          <div class="hero-badge">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            HUNIAN KOS NYAMAN &amp; STRATEGIS
           </div>
+
+          <h1 style="font-size: 36px; line-height: 1.25; margin-bottom: 16px; color: var(--color-neutral-900);">
+            Temukan Kamar Kos Siap Huni di {{ $kosSettings['name'] ?? 'KosFly Residence' }}
+          </h1>
+
+          <p class="hero-lead" style="font-size: 15px; margin-bottom: 24px; line-height: 1.6; color: var(--color-neutral-700);">
+            Kamar furnished lengkap (AC, WiFi kencang, kasur empuk, kamar mandi dalam). Lingkungan tenang, bersih, dan aman 24 jam. Booking online sekarang dan langsung siap check-in!
+          </p>
+
+          <div class="hero-actions" style="margin-bottom: 28px;">
+            <a class="btn btn-primary" href="#kamar-tersedia" style="font-size: 14px; padding: 10px 22px;">
+              Lihat Kamar Kosong ({{ $totalAvailable }})
+            </a>
+            <a class="btn btn-secondary" href="{{ $waUrl }}" target="_blank" rel="noopener" style="font-size: 14px; padding: 10px 20px; display:inline-flex; align-items:center; gap:8px; background:#ffffff; color:var(--color-neutral-900); border:1px solid var(--color-divider);" title="Tanya Pengelola via WhatsApp">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#25d366"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.275.072.376-.044c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824z"/></svg>
+              <span>Tanya Pengelola</span>
+            </a>
+          </div>
+
           <div class="hero-points">
             <span class="hero-point">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-              Gratis dicoba
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+              Siap Huni (Fully Furnished)
             </span>
             <span class="hero-point">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-              Tanpa instalasi
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+              Bebas Biaya Siluman
             </span>
             <span class="hero-point">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-              Data tersimpan rapi
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+              Keamanan 24 Jam
             </span>
           </div>
         </div>
 
-        <!-- Visual hero: mockup dashboard ringkas -->
-        <div class="hero-visual" aria-hidden="true">
-          <div class="mock-card">
-            <div class="mock-bar">
-              <span class="mock-bar-dots"><i></i><i></i><i></i></span>
-              <span class="mock-url">app.kosfly.id/dashboard</span>
-            </div>
-            <div class="mock-body">
-              <div class="mock-grid-2">
-                <div class="mock-stat">
-                  <div class="mock-stat-label">Kamar Terisi</div>
-                  <div class="mock-stat-value"><b class="count-num" data-count="7">7</b> <small>/ 12 kamar</small></div>
+        <!-- Visual Hero: Kartu Rekomendasi Kamar Kos Riil dari DB -->
+        <div class="hero-visual">
+          @if($featuredRoom)
+            <div class="card elev-md" style="background: #ffffff; border: 1px solid var(--color-divider); border-radius: 8px; overflow: hidden; padding: 0;">
+              <div style="height: 160px; background: linear-gradient(135deg, var(--color-neutral-800), var(--color-neutral-900)); position: relative; display: flex; align-items: center; justify-content: center; color: #ffffff;">
+                @if($featuredRoom->image)
+                  <img src="{{ asset('storage/' . $featuredRoom->image) }}" alt="Kamar {{ $featuredRoom->room_number }}" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;">
+                  <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.35);"></div>
+                @endif
+                <div style="text-align: center; padding: 16px; position: relative; z-index: 2;">
+                  <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-neutral-300); font-weight: 700; margin-bottom: 4px;">Rekomendasi Kamar</div>
+                  <div style="font-size: 26px; font-weight: 800; color: #ffffff;">Kamar {{ $featuredRoom->room_number }}</div>
+                  <div style="font-size: 13px; color: var(--color-neutral-200); margin-top: 4px;">Lantai {{ $featuredRoom->floor }} • {{ $kosSettings['name'] ?? 'KosFly Residence' }}</div>
                 </div>
-                <div class="mock-stat">
-                  <div class="mock-stat-label">Pendapatan Bulan Ini</div>
-                  <div class="mock-stat-value">Rp <b class="count-num" data-count="24.5" data-decimals="1">24,5</b> <small>jt</small></div>
-                </div>
-              </div>
-              <div class="mock-chart">
-                <div class="mock-chart-head">
-                  <span class="mock-chart-title">Pendapatan 6 Bulan</span>
-                  <span class="mock-chart-legend"><span class="lg">Masuk</span><span class="lg lg-2">Keluar</span></span>
-                </div>
-                <div class="mock-cols">
-                  <div class="mock-col"><b style="height:45%"></b><i style="height:30%"></i></div>
-                  <div class="mock-col"><b style="height:55%"></b><i style="height:35%"></i></div>
-                  <div class="mock-col"><b style="height:50%"></b><i style="height:38%"></i></div>
-                  <div class="mock-col"><b style="height:65%"></b><i style="height:40%"></i></div>
-                  <div class="mock-col"><b style="height:70%"></b><i style="height:48%"></i></div>
-                  <div class="mock-col"><b class="hl" style="height:80%"></b><i style="height:52%"></i></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== PROBLEM / VALUE ===================== -->
-    <section class="problem section">
-      <div class="container">
-        <div class="section-head center" data-reveal>
-          <span class="eyebrow">Masalah Umum Pengelola Kos</span>
-          <h2>Masih Mengelola Kos Secara Manual?</h2>
-          <p>Catatan di buku, tagihan diingat-ingat, dan laporan dibuat dari nol setiap bulan. KosFly menyelesaikan semua itu.</p>
-        </div>
-
-        <div class="compare-grid" data-reveal>
-          <!-- Tanpa KosFly -->
-          <div class="compare-col against">
-            <div class="compare-col head">
-              <span class="head-ic">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
-              </span>
-              <div>
-                <h3>Tanpa KosFly</h3>
-                <span>Masalah yang sering terjadi</span>
-              </div>
-            </div>
-            <ul class="compare-list">
-              <li class="against-ic">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
-                <span><strong>Data kamar sulit dipantau</strong><span class="cmp-desc">Status kamar kosong atau terisi tidak pernah terlihat jelas.</span></span>
-              </li>
-              <li class="against-ic">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
-                <span><strong>Pembayaran penghuni mudah terlewat</strong><span class="cmp-desc">Tidak ada pengingat tagihan dan riwayat pembayaran.</span></span>
-              </li>
-              <li class="against-ic">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
-                <span><strong>Pengeluaran tidak tercatat rapi</strong><span class="cmp-desc">Biaya perbaikan dan operasional mudah terlupakan.</span></span>
-              </li>
-              <li class="against-ic">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
-                <span><strong>Laporan harus dibuat manual</strong><span class="cmp-desc">Menghitung ulang pendapatan dan pengeluaran memakan waktu.</span></span>
-              </li>
-            </ul>
-          </div>
-
-          <!-- Dengan KosFly -->
-          <div class="compare-col for">
-            <div class="compare-col head">
-              <span class="head-ic">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-              </span>
-              <div>
-                <h3>Dengan KosFly</h3>
-                <span>Semua teratasi otomatis</span>
-              </div>
-            </div>
-            <ul class="compare-list">
-              <li class="for-ic">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-                <span><strong>Status kamar selalu jelas</strong><span class="cmp-desc">Pantau kamar terisi, kosong, dan perbaikan secara langsung.</span></span>
-              </li>
-              <li class="for-ic">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-                <span><strong>Pembayaran terpantau</strong><span class="cmp-desc">Tagihan, status pembayaran, dan riwayat tersimpan terpusat.</span></span>
-              </li>
-              <li class="for-ic">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-                <span><strong>Pengeluaran tercatat rapi</strong><span class="cmp-desc">Setiap biaya operasional terdokumentasi dan mudah ditelusuri.</span></span>
-              </li>
-              <li class="for-ic">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-                <span><strong>Laporan instan</strong><span class="cmp-desc">Ringkasan pendapatan dan pengeluaran tersaji otomatis.</span></span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== FEATURES ===================== -->
-    <section class="features section" id="fitur">
-      <div class="container">
-        <div class="section-head center" data-reveal>
-          <span class="eyebrow">Fitur KosFly</span>
-          <h2>Semua Kebutuhan Pengelolaan Kos dalam Satu Tempat</h2>
-          <p>Delapan modul lengkap untuk mengelola kos Anda dari data kamar hingga laporan operasional.</p>
-        </div>
-
-        <div class="feature-grid" data-reveal>
-          <article class="feature-card">
-            <span class="feature-ic">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-8h6v8"/></svg>
-            </span>
-            <h3>Kelola Kamar</h3>
-            <p>Kelola nomor kamar, lantai, harga, status, dan penghuni setiap kamar.</p>
-          </article>
-
-          <article class="feature-card">
-            <span class="feature-ic">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            </span>
-            <h3>Penghuni</h3>
-            <p>Simpan dan kelola data penghuni secara terpusat dalam satu sistem.</p>
-          </article>
-
-          <article class="feature-card">
-            <span class="feature-ic">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
-            </span>
-            <h3>Kontrak Sewa</h3>
-            <p>Pantau kontrak dan masa sewa penghuni dengan tanggal yang jelas.</p>
-          </article>
-
-          <article class="feature-card">
-            <span class="feature-ic">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7h20v12H2z"/><path d="M2 11h20"/><path d="M6 15h4"/></svg>
-            </span>
-            <h3>Pembayaran</h3>
-            <p>Pantau tagihan, pembayaran, status pembayaran, dan bukti pembayaran.</p>
-          </article>
-
-          <article class="feature-card">
-            <span class="feature-ic">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-            </span>
-            <h3>Maintenance</h3>
-            <p>Kelola laporan kerusakan dan proses maintenance kamar.</p>
-          </article>
-
-          <article class="feature-card">
-            <span class="feature-ic">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 18h6v-6"/></svg>
-            </span>
-            <h3>Pengeluaran</h3>
-            <p>Catat dan pantau berbagai pengeluaran operasional kos.</p>
-          </article>
-
-          <article class="feature-card">
-            <span class="feature-ic">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-            </span>
-            <h3>Fasilitas</h3>
-            <p>Kelola fasilitas yang tersedia pada setiap kamar.</p>
-          </article>
-
-          <article class="feature-card">
-            <span class="feature-ic">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
-            </span>
-            <h3>Laporan</h3>
-            <p>Pantau data dan laporan operasional kos secara berkala.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== HOW IT WORKS ===================== -->
-    <section class="steps section">
-      <div class="container">
-        <div class="section-head center" data-reveal>
-          <span class="eyebrow">Cara Kerja</span>
-          <h2>Mulai Mengelola Kos dalam 3 Langkah</h2>
-          <p>Tanpa pelatihan rumit. KosFly siap dipakai dalam hitungan menit.</p>
-        </div>
-
-        <div class="step-grid" data-reveal>
-          <div class="step-card">
-            <div class="step-num">01</div>
-            <h3>Tambahkan Data Kos</h3>
-            <p>Input nama kos, daftar kamar, harga sewa, dan fasilitas yang tersedia.</p>
-          </div>
-          <div class="step-card">
-            <div class="step-num">02</div>
-            <h3>Kelola Operasional</h3>
-            <p>Catat penghuni, buat kontrak, pantau pembayaran, dan kelola maintenance harian.</p>
-          </div>
-          <div class="step-card">
-            <div class="step-num">03</div>
-            <h3>Pantau &amp; Analisis</h3>
-            <p>Lihat pendapatan, pengeluaran, tingkat hunian, dan laporan dalam satu dashboard.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== DASHBOARD PREVIEW ===================== -->
-    <section class="preview section">
-      <div class="container">
-        <div class="section-head center" data-reveal>
-          <span class="eyebrow">Dashboard</span>
-          <h2>Semua Data Kos dalam Satu Dashboard</h2>
-          <p>Kamar, penghuni, pembayaran, pendapatan, pengeluaran, dan tingkat hunian terpantau sekaligus.</p>
-        </div>
-
-        <div class="preview-frame" aria-hidden="true" data-reveal>
-          <div class="preview-window">
-            <!-- Sidebar mock -->
-            <aside class="mock-sidebar">
-              <a class="brand" href="#">
-                <span class="brand-mark">K</span>
-                Kos<span class="brand-accent">Fly</span>
-              </a>
-              <nav class="mock-menu">
-                <a class="active" href="#">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7v9H3z"/><path d="M14 3h7v5h-7z"/><path d="M14 12h7v9h-7z"/><path d="M3 16h7v5H3z"/></svg>
-                  Dashboard
-                </a>
-                <a href="#">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-8h6v8"/></svg>
-                  Kamar
-                </a>
-                <a href="#">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                  Penghuni
-                </a>
-                <a href="#">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7h20v12H2z"/><path d="M2 11h20"/><path d="M6 15h4"/></svg>
-                  Pembayaran
-                </a>
-                <a href="#">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
-                  Laporan
-                </a>
-              </nav>
-            </aside>
-
-            <!-- Konten mock -->
-            <div class="mock-main">
-              <div class="mock-topbar">
-                <span class="mock-search">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                  Cari kamar, penghuni, pembayaran…
+                <span class="tag tag-accent" style="position: absolute; top: 12px; right: 12px; font-weight: 700; z-index: 2;">
+                  Siap Huni
                 </span>
-                <span class="mock-top-right">
-                  <span class="mock-bell">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+              </div>
+              <div style="padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px;">
+                  <span class="small muted">Tarif Sewa:</span>
+                  <span style="font-size: 22px; font-weight: 800; color: var(--color-neutral-900);">
+                    Rp {{ number_format($featuredRoom->price, 0, ',', '.') }}<span class="small muted" style="font-weight: normal; font-size: 13px;"> / bulan</span>
                   </span>
-                  <span class="mock-avatar">AK</span>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px;">
+                  @forelse($featuredRoom->facilities->take(4) as $facility)
+                    <span class="tag tag-outline" style="font-size: 11px;">{{ $facility->name }}</span>
+                  @empty
+                    <span class="tag tag-outline" style="font-size: 11px;">Fasilitas Lengkap</span>
+                  @endforelse
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                  <a href="{{ route('public.rooms.show', $featuredRoom) }}" class="btn btn-primary btn-block" style="text-align: center; justify-content: center; font-weight: 700;">
+                    Lihat Detail &amp; Sewa Kamar Ini
+                  </a>
+                  <a href="#kamar-tersedia" class="small muted text-center" style="display: block; text-decoration: none; padding-top: 4px;">
+                    Lihat semua {{ $totalAvailable }} kamar kosong lainnya &darr;
+                  </a>
+                </div>
+              </div>
+            </div>
+          @else
+            <div class="card elev-md" style="background: #ffffff; border: 1px solid var(--color-divider); border-radius: 8px; overflow: hidden; padding: 0;">
+              <div style="height: 160px; background: linear-gradient(135deg, var(--color-neutral-800), var(--color-neutral-900)); position: relative; display: flex; align-items: center; justify-content: center; color: #ffffff;">
+                <div style="text-align: center; padding: 16px;">
+                  <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-neutral-400); font-weight: 700; margin-bottom: 4px;">Status Hunian</div>
+                  <div style="font-size: 22px; font-weight: 800;">{{ $kosSettings['name'] ?? 'KosFly Residence' }}</div>
+                  <div style="font-size: 12px; color: var(--color-neutral-300); margin-top: 4px;">{{ $kosSettings['address'] ?? 'Bandung' }}</div>
+                </div>
+                <span class="tag tag-neutral" style="position: absolute; top: 12px; right: 12px; font-weight: 700;">
+                  Penuh
+                </span>
+              </div>
+              <div style="padding: 20px; text-align: center;">
+                <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Semua Kamar Saat Ini Terisi</h4>
+                <p class="small muted" style="margin-bottom: 16px;">Hubungi pengelola untuk reservasi kamar kosong berikutnya.</p>
+                <a href="{{ $waUrl }}" target="_blank" rel="noopener" class="btn btn-secondary btn-block" style="justify-content: center;">
+                  Hubungi Pengelola via WA
+                </a>
+              </div>
+            </div>
+          @endif
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== BAR STATISTIK / NILAI ===================== -->
+    <section style="padding: 10px 0 35px;">
+      <div class="container">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="trust-stat-card">
+            <div style="font-size: 30px; font-weight: 800; color: var(--color-neutral-900); line-height: 1;">{{ $totalAvailable }}</div>
+            <div style="font-weight: 700; margin-top: 6px; font-size: 14px;">Kamar Siap Huni</div>
+            <div class="small muted">dari {{ $totalRooms }} total kamar</div>
+          </div>
+          <div class="trust-stat-card">
+            <div style="font-size: 30px; font-weight: 800; color: var(--color-neutral-900); line-height: 1;">100%</div>
+            <div style="font-weight: 700; margin-top: 6px; font-size: 14px;">Fully Furnished</div>
+            <div class="small muted">Tinggal bawa koper pakaian</div>
+          </div>
+          <div class="trust-stat-card">
+            <div style="font-size: 30px; font-weight: 800; color: var(--color-neutral-900); line-height: 1;">24 Jam</div>
+            <div style="font-weight: 700; margin-top: 6px; font-size: 14px;">Akses Aman</div>
+            <div class="small muted">CCTV &amp; gerbang kunci mandiri</div>
+          </div>
+          <div class="trust-stat-card">
+            <div style="font-size: 30px; font-weight: 800; color: var(--color-neutral-900); line-height: 1;">2 Menit</div>
+            <div style="font-weight: 700; margin-top: 6px; font-size: 14px;">Booking Online</div>
+            <div class="small muted">Konfirmasi cepat &amp; resmi</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SHOWCASE KAMAR TERSEDIA ===================== -->
+    <section class="section" id="kamar-tersedia" style="background: var(--color-surface); padding: 50px 0 70px;">
+      <div class="container">
+        <div class="section-head center">
+          <span class="eyebrow">PILIHAN TERBAIK</span>
+          <h2 style="font-size: 28px;">Kamar Kosong Siap Huni</h2>
+          <p>Seluruh kamar dalam kondisi terawat, bersih, dan siap ditempati hari ini. Pilih nomor kamar favorit Anda!</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6" style="margin-top: 32px;">
+          @forelse($availableRooms as $room)
+            <div class="room-card-public">
+              <!-- Foto Kamar -->
+              <div style="height: 190px; width: 100%; position: relative; background: var(--color-neutral-200); overflow: hidden;">
+                @if($room->image)
+                  <img src="{{ asset('storage/' . $room->image) }}" alt="Kamar {{ $room->room_number }}" style="width: 100%; height: 100%; object-fit: cover;">
+                @else
+                  <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--color-neutral-400);">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  </div>
+                @endif
+                <span class="tag tag-accent" style="position: absolute; top: 12px; right: 12px; font-weight: 700;">
+                  Tersedia
+                </span>
+                <span class="tag tag-neutral" style="position: absolute; bottom: 12px; left: 12px; background: rgba(0,0,0,0.65); color: #fff; font-size: 11px;">
+                  Lantai {{ $room->floor }}
                 </span>
               </div>
 
-              <div class="mock-content">
-                <div class="mock-head-row">
-                  <h3>Ringkasan Kos Anda</h3>
-                  <span class="mock-date">Agustus 2026</span>
-                </div>
-
-                <div class="mock-stats">
-                  <div class="mock-stat big">
-                    <div class="mock-stat-label">Kamar Terisi</div>
-                    <div class="mock-stat-value lg"><b class="count-num" data-count="7">7</b> <small>/ 12 kamar</small></div>
-                  </div>
-                  <div class="mock-stat big">
-                    <div class="mock-stat-label">Penghuni Aktif</div>
-                    <div class="mock-stat-value lg"><b class="count-num" data-count="9">9</b></div>
-                  </div>
-                  <div class="mock-stat big">
-                    <div class="mock-stat-label">Pendapatan Bulan Ini</div>
-                    <div class="mock-stat-value lg">Rp <b class="count-num" data-count="24.5" data-decimals="1">24,5</b> <small>jt</small> <span class="up">▲ 12%</span></div>
-                  </div>
-                  <div class="mock-stat big">
-                    <div class="mock-stat-label">Tingkat Hunian</div>
-                    <div class="mock-stat-value lg"><b class="count-num" data-count="58">58</b>%</div>
-                  </div>
-                </div>
-
-                <div class="mock-panels">
-                  <div class="mock-panel">
-                    <h4>Pendapatan vs Pengeluaran <span class="chip gray">6 bulan</span></h4>
-                    <div class="mock-cols tall">
-                      <div class="mock-col"><b style="height:38%"></b><i style="height:24%"></i></div>
-                      <div class="mock-col"><b style="height:48%"></b><i style="height:30%"></i></div>
-                      <div class="mock-col"><b style="height:42%"></b><i style="height:34%"></i></div>
-                      <div class="mock-col"><b style="height:58%"></b><i style="height:36%"></i></div>
-                      <div class="mock-col"><b style="height:64%"></b><i style="height:44%"></i></div>
-                      <div class="mock-col"><b class="hl" style="height:72%"></b><i style="height:48%"></i></div>
-                    </div>
-                    <div class="mock-chart-legend" style="margin-top:12px;">
-                      <span class="lg">Pendapatan</span><span class="lg lg-2">Pengeluaran</span>
-                    </div>
+              <!-- Rincian Kamar -->
+              <div style="padding: 18px; display: flex; flex-direction: column; flex: 1; justify-content: space-between;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                    <h3 style="font-size: 19px; font-weight: 800; margin: 0; color: var(--color-neutral-900);">
+                      Kamar {{ $room->room_number }}
+                    </h3>
                   </div>
 
-                  <div class="mock-panel">
-                    <h4>Okupansi Kamar <span class="chip amber">12 kamar</span></h4>
-                    <div class="mock-donut-wrap">
-                      <svg class="mock-donut" width="92" height="92" viewBox="0 0 100 100" role="img" aria-label="Okupansi kamar: 7 terisi, 4 kosong, 1 perbaikan">
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="#EEEEEE" stroke-width="12"></circle>
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="#1A1C1C" stroke-width="12" stroke-dasharray="158.3 251.3" transform="rotate(-90 50 50)"></circle>
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="#DADADA" stroke-width="12" stroke-dasharray="62.8 251.3" stroke-dashoffset="-158.3" transform="rotate(-90 50 50)"></circle>
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="#B7131A" stroke-width="12" stroke-dasharray="30.2 251.3" stroke-dashoffset="-221.1" transform="rotate(-90 50 50)"></circle>
-                      </svg>
-                      <div class="mock-legend">
-                        <div><i style="background:#1A1C1C"></i>Terisi <b>7</b></div>
-                        <div><i style="background:#DADADA"></i>Kosong <b>4</b></div>
-                        <div><i style="background:#B7131A"></i>Perbaikan <b>1</b></div>
+                  <div style="font-size: 19px; font-weight: 800; color: var(--color-neutral-900); margin-bottom: 12px;">
+                    Rp {{ number_format($room->price, 0, ',', '.') }}
+                    <span class="small muted" style="font-weight: 400; font-size: 13px;">/ bulan</span>
+                  </div>
+
+                  <!-- Fasilitas Kamar -->
+                  <div style="margin-bottom: 14px;">
+                    @if($room->facilities->count())
+                      <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        @foreach($room->facilities->take(3) as $fac)
+                          <span class="tag tag-outline" style="font-size: 11px; padding: 2px 8px;">{{ $fac->name }}</span>
+                        @endforeach
+                        @if($room->facilities->count() > 3)
+                          <span class="small muted" style="font-size: 11px;">+{{ $room->facilities->count() - 3 }} lainnya</span>
+                        @endif
                       </div>
-                    </div>
+                    @else
+                      <span class="small muted" style="font-size: 12px;">Fasilitas standar siap huni</span>
+                    @endif
                   </div>
                 </div>
 
-                <div class="mock-panel">
-                  <h4>Status Kamar Terbaru</h4>
-                  <div class="mock-rooms">
-                    <div class="mock-room"><span class="r-no">A-01</span><span class="r-name">Budi Santoso</span><span class="chip green">Terisi</span></div>
-                    <div class="mock-room"><span class="r-no">A-02</span><span class="r-name">Siti Aminah</span><span class="chip green">Terisi</span></div>
-                    <div class="mock-room"><span class="r-no">A-03</span><span class="r-name">Kosong</span><span class="chip gray">Kosong</span></div>
-                    <div class="mock-room"><span class="r-no">B-01</span><span class="r-name">Perbaikan AC</span><span class="chip amber">Perbaikan</span></div>
-                    <div class="mock-room"><span class="r-no">B-02</span><span class="r-name">Kosong</span><span class="chip gray">Kosong</span></div>
-                  </div>
+                <div style="margin-top: 12px; pt-3; border-top: 1px solid var(--color-divider);">
+                  <a href="{{ route('public.rooms.show', $room) }}" class="btn btn-primary btn-block" style="text-align: center; justify-content: center;">
+                    Lihat Detail &amp; Sewa
+                  </a>
                 </div>
               </div>
             </div>
+          @empty
+            <div class="col-span-3 card elev-sm text-center" style="padding: 48px; border: 1px dashed var(--color-divider); background: #fff;">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 12px; color: var(--color-neutral-400);"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+              <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 6px;">Seluruh Kamar Sedang Penuh</h3>
+              <p class="small muted" style="margin: 0 0 16px;">Saat ini semua kamar terisi. Silakan hubungi pengelola untuk masuk ke daftar tunggu / reservasi kamar berikutnya.</p>
+              <a href="{{ $waUrl }}" target="_blank" class="btn btn-secondary">Hubungi Pengelola via WA</a>
+            </div>
+          @endforelse
+        </div>
+
+        <div style="text-align: center; margin-top: 36px;">
+          <a href="{{ route('public.rooms.index') }}" class="btn btn-secondary" style="font-size: 14px; padding: 10px 24px;">
+            Lihat Katalog Semua Kamar &rarr;
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== FASILITAS UNGGULAN ===================== -->
+    <section class="section" id="fasilitas" style="padding: 60px 0;">
+      <div class="container">
+        <div class="section-head center">
+          <span class="eyebrow">KENYAMANAN HUNIAN</span>
+          <h2 style="font-size: 28px;">Fasilitas Lengkap untuk Kenyamanan Anda</h2>
+          <p>Dirancang khusus untuk mahasiswa dan pekerja yang mendambakan istirahat tenang dan lingkungan produktif.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" style="margin-top: 32px;">
+          <div class="amenity-card">
+            <div style="font-size: 26px;">🛏️</div>
+            <div>
+              <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">Kamar Full Furnished</h4>
+              <p class="small muted" style="margin: 0; line-height: 1.5;">Kasur springbed empuk, bantal, lemari pakaian, dan meja kursi belajar.</p>
+            </div>
+          </div>
+
+          <div class="amenity-card">
+            <div style="font-size: 26px;">❄️</div>
+            <div>
+              <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">AC Dingin &amp; Bersih</h4>
+              <p class="small muted" style="margin: 0; line-height: 1.5;">Pendingin ruangan terawat, dingin optimal, dan rutin diservis berkala.</p>
+            </div>
+          </div>
+
+          <div class="amenity-card">
+            <div style="font-size: 26px;">📶</div>
+            <div>
+              <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">WiFi Fiber Kencang</h4>
+              <p class="small muted" style="margin: 0; line-height: 1.5;">Internet stabil tanpa kuota untuk kebutuhan kuliah online, streaming, dan WFA.</p>
+            </div>
+          </div>
+
+          <div class="amenity-card">
+            <div style="font-size: 26px;">🚿</div>
+            <div>
+              <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">Kamar Mandi Dalam</h4>
+              <p class="small muted" style="margin: 0; line-height: 1.5;">Dilengkapi shower, kloset duduk, dan suplai air bersih lancar setiap hari.</p>
+            </div>
+          </div>
+
+          <div class="amenity-card">
+            <div style="font-size: 26px;">🍳</div>
+            <div>
+              <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">Dapur Bersama</h4>
+              <p class="small muted" style="margin: 0; line-height: 1.5;">Kompor gas, wastafel cuci piring, kulkas bersama, dan dispenser air minum.</p>
+            </div>
+          </div>
+
+          <div class="amenity-card">
+            <div style="font-size: 26px;">🛵</div>
+            <div>
+              <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">Parkir Motor &amp; Mobil</h4>
+              <p class="small muted" style="margin: 0; line-height: 1.5;">Area parkir luas dan aman di dalam pagar tertutup khusus penghuni.</p>
+            </div>
+          </div>
+
+          <div class="amenity-card">
+            <div style="font-size: 26px;">🛡️</div>
+            <div>
+              <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">CCTV &amp; Kunci Mandiri</h4>
+              <p class="small muted" style="margin: 0; line-height: 1.5;">Keamanan terpantau CCTV 24 jam dengan gerbang kunci mandiri bebas jam malam kaku.</p>
+            </div>
+          </div>
+
+          <div class="amenity-card">
+            <div style="font-size: 26px;">🔧</div>
+            <div>
+              <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">Teknisi Siap Bantu</h4>
+              <p class="small muted" style="margin: 0; line-height: 1.5;">Jika ada kran rusak atau lampu mati, cukup lapor di web dan teknisi segera datang.</p>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ===================== BENEFITS ===================== -->
-    <section class="benefits section" id="tentang">
+    <!-- ===================== ALUR MUDAH MENYEWA ===================== -->
+    <section class="section" id="cara-sewa" style="background: var(--color-surface); padding: 60px 0;">
       <div class="container">
-        <div class="section-head center" data-reveal>
-          <span class="eyebrow">Keunggulan</span>
-          <h2>Kenapa Menggunakan KosFly?</h2>
-          <p>Dibuat khusus untuk pengelola kos di Indonesia agar operasional harian lebih ringan.</p>
+        <div class="section-head center">
+          <span class="eyebrow">PROSES PRAKTIS</span>
+          <h2 style="font-size: 28px;">3 Langkah Mudah Menyewa Kamar Kos</h2>
+          <p>Tanpa ribet bolak-balik survei manual. Reservasi kamar impian Anda langsung dari layar HP.</p>
         </div>
 
-        <div class="benefit-grid" data-reveal>
-          <div class="benefit-item">
-            <span class="benefit-ic">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-            </span>
-            <div>
-              <h3>Data Lebih Terorganisir</h3>
-              <p>Semua data kamar, penghuni, dan transaksi tersimpan rapi dan terpusat.</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6" style="margin-top: 36px;">
+          <div class="step-card">
+            <div class="step-number">1</div>
+            <h3 style="font-size: 17px; font-weight: 800; margin-bottom: 6px;">Pilih Kamar</h3>
+            <p class="small muted" style="margin: 0; line-height: 1.6;">
+              Pilih nomor kamar kosong yang sesuai dengan selera lantai dan budget bulanan Anda di daftar kamar.
+            </p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">2</div>
+            <h3 style="font-size: 17px; font-weight: 800; margin-bottom: 6px;">Isi Data &amp; Booking</h3>
+            <p class="small muted" style="margin: 0; line-height: 1.6;">
+              Lengkapi formulir online (nama, nomor WA, NIK, dan tanggal mulai sewa) hanya dalam waktu 2 menit.
+            </p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">3</div>
+            <h3 style="font-size: 17px; font-weight: 800; margin-bottom: 6px;">Bayar &amp; Check-In</h3>
+            <p class="small muted" style="margin: 0; line-height: 1.6;">
+              Dapatkan invoice resmi, konfirmasi pembayaran, dan ambil kunci kamar Anda. Selamat menikmati hunian baru!
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== LOKASI & LINGKUNGAN ===================== -->
+    <section class="section" id="lokasi" style="padding: 60px 0;">
+      <div class="container">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          <div>
+            <span class="eyebrow">LOKASI STRATEGIS</span>
+            <h2 style="font-size: 28px; margin-bottom: 14px;">Dekat ke Mana Saja</h2>
+            <p class="muted" style="margin-bottom: 22px; line-height: 1.6;">
+              Berlokasi di kawasan yang tenang namun sangat dekat dengan pusat aktivitas, fasilitas umum, dan sentra kuliner.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 22px;">
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <span style="font-size: 18px;">🎓</span>
+                <span style="font-size: 14px; font-weight: 600;">5 Menit ke Kampus / Kawasan Pendidikan</span>
+              </div>
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <span style="font-size: 18px;">🛒</span>
+                <span style="font-size: 14px; font-weight: 600;">2 Menit ke Minimarket (Indomaret / Alfamart)</span>
+              </div>
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <span style="font-size: 18px;">🍜</span>
+                <span style="font-size: 14px; font-weight: 600;">1 Menit ke Sentra Kuliner, Warteg &amp; Kafe</span>
+              </div>
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <span style="font-size: 18px;">🏥</span>
+                <span style="font-size: 14px; font-weight: 600;">10 Menit ke Klinik / Rumah Sakit Terdekat</span>
+              </div>
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <span style="font-size: 18px;">🚆</span>
+                <span style="font-size: 14px; font-weight: 600;">Akses Transportasi Umum Mudah</span>
+              </div>
+            </div>
+
+            <div class="card p-3" style="background: var(--color-surface); border: 1px solid var(--color-divider);">
+              <div class="small font-semibold text-neutral-800">Alamat Gedung Kos:</div>
+              <div class="small muted">{{ $kosSettings['address'] ?? 'Jl. Sukabirus No. 12, Dayeuhkolot, Bandung' }}</div>
             </div>
           </div>
 
-          <div class="benefit-item">
-            <span class="benefit-ic">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-            </span>
-            <div>
-              <h3>Menghemat Waktu</h3>
-              <p>Hentikan pencatatan manual. Semua input dan pencarian jadi lebih cepat.</p>
+          <div>
+            <!-- Wadah Peta Leaflet Interaktif -->
+            <div class="card elev-sm" style="background: #fff; border: 1px solid var(--color-divider); overflow: hidden; margin-bottom: 16px;">
+              <div id="kosPublicMap" style="height: 320px; width: 100%; z-index: 1;"></div>
+              <div style="padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: var(--color-surface); border-top: 1px solid var(--color-divider);">
+                <div style="font-size: 13px; font-weight: 600; color: var(--color-neutral-800);">
+                  📍 {{ $kosSettings['name'] ?? 'KosFly Residence' }}
+                </div>
+                @php
+                  $latVal = $kosSettings['latitude'] ?? -6.9740;
+                  $lngVal = $kosSettings['longitude'] ?? 107.6305;
+                  $gmapsUrl = "https://www.google.com/maps/dir/?api=1&destination={$latVal},{$lngVal}";
+                @endphp
+                <a href="{{ $gmapsUrl }}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="font-size: 12px; gap: 6px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                  Petunjuk Arah (Google Maps) &rarr;
+                </a>
+              </div>
             </div>
-          </div>
 
-          <div class="benefit-item">
-            <span class="benefit-ic">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-            </span>
-            <div>
-              <h3>Pembayaran Lebih Mudah Dipantau</h3>
-              <p>Status tagihan dan riwayat pembayaran terlihat jelas kapan saja.</p>
-            </div>
-          </div>
-
-          <div class="benefit-item">
-            <span class="benefit-ic">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-            </span>
-            <div>
-              <h3>Operasional Lebih Terkontrol</h3>
-              <p>Maintenance dan pengeluaran terdokumentasi sehingga tidak ada yang terlewat.</p>
-            </div>
-          </div>
-
-          <div class="benefit-item">
-            <span class="benefit-ic">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-            </span>
-            <div>
-              <h3>Data Tersimpan dalam Satu Sistem</h3>
-              <p>Tidak ada lagi data tersebar di buku, Excel, dan catatan kecil.</p>
-            </div>
-          </div>
-
-          <div class="benefit-item">
-            <span class="benefit-ic">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-            </span>
-            <div>
-              <h3>Laporan Lebih Cepat Dibuat</h3>
-              <p>Ringkasan pendapatan dan pengeluaran tersaji otomatis setiap bulan.</p>
+            <!-- Kartu Survei Kamar -->
+            <div class="card elev-sm" style="padding: 20px; background: #fff; border: 1px solid var(--color-divider); text-align: center;">
+              <h3 style="font-size: 17px; font-weight: 800; margin-bottom: 4px;">Ingin Survei Langsung ke Lokasi?</h3>
+              <p class="small muted" style="margin-bottom: 14px;">
+                Jadwalkan kunjungan survei kamar kos bersama pengelola. Kami siap menyambut Anda melihat langsung suasana kamar.
+              </p>
+              <a href="{{ $waUrl }}" target="_blank" rel="noopener" class="btn btn-secondary btn-block" style="justify-content: center; font-weight: 700;">
+                Jadwalkan Survei via WhatsApp
+              </a>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ===================== CTA ===================== -->
-    <section class="cta-section">
-      <div class="container">
-        <div class="cta-panel" data-reveal>
-          <h2>Siap Mengelola Kos dengan Lebih Mudah?</h2>
-          <p>Kelola operasional kos Anda dengan lebih teratur dalam satu platform.</p>
-          <div class="cta-actions">
-            <a class="btn btn-primary" href="{{ route('register') }}">Mulai Sekarang</a>
-            <a class="btn btn-ghost" href="{{ route('login') }}">Masuk</a>
+    <!-- ===================== FAQ SEPUTAR SEWA ===================== -->
+    <section class="section" id="faq" style="background: var(--color-surface); padding: 60px 0;">
+      <div class="container" style="max-width: 800px;">
+        <div class="section-head center">
+          <span class="eyebrow">PERTANYAAN UMUM</span>
+          <h2 style="font-size: 28px;">Pertanyaan yang Sering Diajukan</h2>
+          <p>Informasi seputar ketentuan sewa, pembayaran, dan kehidupan sehari-hari di KosFly.</p>
+        </div>
+
+        <div style="margin-top: 32px;">
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>Apakah ada jam malam di KosFly?</span>
+              <span>+</span>
+            </div>
+            <div class="faq-answer">
+              Setiap penghuni diberikan akses kunci/gerbang mandiri, sehingga Anda dapat beraktivitas secara fleksibel dengan tetap menjaga ketertiban dan ketenangan lingkungan kos bagi penghuni lainnya.
+            </div>
           </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>Apakah biaya sewa bulanan sudah termasuk air dan internet?</span>
+              <span>+</span>
+            </div>
+            <div class="faq-answer">
+              Ya, fasilitas air bersih dan koneksi internet WiFi fiber berkecepatan tinggi sudah termasuk dalam tarif sewa bulanan tanpa biaya tambahan.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>Bagaimana cara melakukan pembayaran uang sewa?</span>
+              <span>+</span>
+            </div>
+            <div class="faq-answer">
+              Pembayaran dapat dilakukan dengan mudah secara online (QRIS, GoPay, OVO, ShopeePay, serta Virtual Account berbagai bank) melalui sistem invoice kami. Setiap pembayaran akan langsung diverifikasi otomatis dan diterbitkan kuitansi lunas resmi yang dapat diunduh kapan saja.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <span>Bagaimana jika ada fasilitas kamar yang mengalami kerusakan?</span>
+              <span>+</span>
+            </div>
+            <div class="faq-answer">
+              Anda cukup login ke akun penghuni dan membuat tiket perbaikan di menu Keluhan. Tim teknisi pengelola kos akan segera datang mengecek dan memperbaikinya.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CTA BANNER ===================== -->
+    <section style="background: var(--color-neutral-900); color: #fff; padding: 50px 0; text-align: center;">
+      <div class="container" style="max-width: 680px;">
+        <h2 style="font-size: 28px; font-weight: 800; margin-bottom: 10px; color: #fff;">
+          Kamar Kosong Sangat Terbatas!
+        </h2>
+        <p style="color: var(--color-neutral-300); font-size: 14px; margin-bottom: 22px; line-height: 1.6;">
+          Jangan lewatkan kesempatan menempati kamar kos yang nyaman dan strategis. Amankan kamar Anda sebelum kehabisan.
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <a href="#kamar-tersedia" class="btn btn-primary" style="font-size: 14px; padding: 10px 24px;">
+            Pilih Kamar Sekarang
+          </a>
+          <a href="{{ $waUrl }}" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size: 14px; padding: 10px 22px; color: var(--color-neutral-900); background: #ffffff; border: 1px solid rgba(255,255,255,0.9); display: inline-flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#25d366"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.275.072.376-.044c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824z"/></svg>
+            <span>Chat via WhatsApp</span>
+          </a>
         </div>
       </div>
     </section>
@@ -531,42 +707,123 @@
   </main>
 
   <!-- ===================== FOOTER ===================== -->
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div class="footer-brand">
-          <a class="brand" href="index.html">
-            <span class="brand-mark">K</span>
-            Kos<span class="brand-accent">Fly</span>
-          </a>
-          <p>Solusi sederhana untuk pengelolaan kos yang lebih teratur.</p>
-        </div>
-
-        <nav class="footer-col" aria-label="Navigasi footer">
-          <h4>Navigasi</h4>
-          <ul>
-            <li><a href="index.html#beranda">Beranda</a></li>
-            <li><a href="index.html#fitur">Fitur</a></li>
-            <li><a href="index.html#tentang">Tentang</a></li>
-          </ul>
-        </nav>
-
-        <nav class="footer-col" aria-label="Akun">
-          <h4>Akun</h4>
-          <ul>
-            <li><a href="{{ route('login') }}">Masuk</a></li>
-            <li><a href="{{ route('register') }}">Daftar</a></li>
-          </ul>
-        </nav>
+  <footer class="site-footer" style="padding: 35px 0; background: #ffffff; border-top: 1px solid var(--color-divider);">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <a class="brand" href="{{ route('home') }}" style="margin-bottom: 4px; display: inline-block;">
+          <span class="brand-mark">K</span>
+          Kos<span class="brand-accent">Fly</span>
+        </a>
+        <p class="small muted" style="margin: 0;">{{ $kosSettings['name'] ?? 'KosFly Residence' }} — {{ $kosSettings['address'] ?? 'Bandung' }}</p>
       </div>
 
-      <div class="footer-bottom">
-        <span>© 2026 KosFly Management System. All rights reserved.</span>
-        <span>Dibuat untuk pengelola kos di Indonesia.</span>
+      <div class="small muted">
+        &copy; {{ date('Y') }} KosFly. Hak Cipta Dilindungi.
       </div>
     </div>
   </footer>
 
-  @vite(['resources/css/app.css','resources/js/app.js'])
+  <!-- ===================== FLOATING WHATSAPP BUTTON (HANYA LOGO WA) ===================== -->
+  <a href="{{ $waUrl }}" target="_blank" rel="noopener" class="wa-float-btn" title="Tanya Pengelola via WhatsApp" aria-label="Tanya Pengelola via WhatsApp">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.275.072.376-.044c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824z"/></svg>
+  </a>
+
+  <script>
+    // Toggle Mobile Drawer
+    const navToggle = document.getElementById('navToggle');
+    const navClose = document.getElementById('navClose');
+    const navDrawer = document.getElementById('navDrawer');
+    const navBackdrop = document.getElementById('navBackdrop') || document.querySelector('.nav-backdrop');
+
+    if (navToggle && navDrawer) {
+      function openNav() {
+        document.body.classList.add('nav-open');
+        navDrawer.classList.add('open');
+        if (navBackdrop) {
+          navBackdrop.classList.add('show');
+          navBackdrop.classList.add('open');
+        }
+        navToggle.setAttribute('aria-expanded', 'true');
+      }
+
+      function closeNav() {
+        document.body.classList.remove('nav-open');
+        navDrawer.classList.remove('open');
+        if (navBackdrop) {
+          navBackdrop.classList.remove('show');
+          navBackdrop.classList.remove('open');
+        }
+        navToggle.setAttribute('aria-expanded', 'false');
+      }
+
+      navToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (document.body.classList.contains('nav-open') || navDrawer.classList.contains('open')) {
+          closeNav();
+        } else {
+          openNav();
+        }
+      });
+
+      if (navClose) {
+        navClose.addEventListener('click', (e) => {
+          e.stopPropagation();
+          closeNav();
+        });
+      }
+
+      if (navBackdrop) {
+        navBackdrop.addEventListener('click', closeNav);
+      }
+
+      // Close when clicking any link inside drawer (smooth jump / navigation)
+      navDrawer.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', closeNav);
+      });
+
+      // Close on Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.body.classList.contains('nav-open')) {
+          closeNav();
+        }
+      });
+    }
+  </script>
+
+  <!-- Leaflet JS CDN -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const mapContainer = document.getElementById('kosPublicMap');
+      if (!mapContainer) return;
+
+      const lat = {{ (float) ($kosSettings['latitude'] ?? -6.9740) }};
+      const lng = {{ (float) ($kosSettings['longitude'] ?? 107.6305) }};
+      const zoom = {{ (int) ($kosSettings['map_zoom'] ?? 16) }};
+      const kosName = @json($kosSettings['name'] ?? 'KosFly Residence');
+      const kosAddress = @json($kosSettings['address'] ?? 'Bandung');
+
+      const map = L.map('kosPublicMap', {
+        scrollWheelZoom: false
+      }).setView([lat, lng], zoom);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(map);
+
+      // Marker kustom / pin lokasi
+      const marker = L.marker([lat, lng]).addTo(map);
+      marker.bindPopup(`
+        <div style="font-family: inherit; font-size: 13px; line-height: 1.4; padding: 4px;">
+          <strong style="color: #0f172a; font-size: 14px; display: block; margin-bottom: 2px;">${kosName}</strong>
+          <span style="color: #64748b; font-size: 12px; display: block; margin-bottom: 8px;">${kosAddress}</span>
+          <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" rel="noopener" style="display: inline-block; background: #0f172a; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; text-decoration: none; font-weight: 600;">
+            Buka Navigasi Rute &rarr;
+          </a>
+        </div>
+      `).openPopup();
+    });
+  </script>
 </body>
 </html>

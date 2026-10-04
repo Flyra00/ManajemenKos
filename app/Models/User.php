@@ -32,10 +32,13 @@ class User extends Authenticatable
         ];
     }
 
-        protected $fillable = [
+    protected $fillable = [
         'name',
+        'email',
         'phone',
+        'password',
     ];
+
 
 
     public function tenant()

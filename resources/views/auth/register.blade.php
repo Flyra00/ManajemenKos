@@ -25,75 +25,42 @@
 
     <div class="auth-visual-content">
         <h1>
-            Kelola Operasional Kos<br>
-            Lebih Teratur.
+            Mulai Tinggal Nyaman<br>
+            di KosFly Residence.
         </h1>
 
         <p>
-            Buat akun KosFly dan mulai kelola kamar, penghuni,
-            pembayaran, serta laporan kos Anda.
+            Daftar akun untuk reservasi kamar impian Anda,
+            simpan riwayat sewa, dan nikmati fasilitas hunian modern.
         </p>
 
-        <!-- Visual ringkas: status kamar -->
+        <!-- Visual ringkas: fitur hunian untuk penyewa -->
         <div class="auth-mock" aria-hidden="true">
-            <div class="mock-bar">
-                <span class="mock-bar-dots">
-                    <i></i>
-                    <i></i>
-                    <i></i>
-                </span>
-
-                <span class="mock-url">
-                    app.kosfly.id/kamar
-                </span>
-            </div>
-
-            <div class="mock-body">
-                <div class="mock-chart" style="margin:0">
-                    <div class="mock-chart-head">
-                        <span class="mock-chart-title">
-                            Status Kamar
-                        </span>
-
-                        <span class="mock-chart-legend">
-                            <span class="lg lg-2">
-                                7/12 terisi
-                            </span>
-                        </span>
+            <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 18px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-accent-400); font-weight: 700;">
+                        Keuntungan Penghuni
+                    </span>
+                    <span style="background: #2563eb; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">
+                        Siap Huni
+                    </span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #fff;">
+                        <span style="color: #22c55e; font-weight: bold;">✓</span>
+                        <span>Booking kamar online instan 2 menit</span>
                     </div>
-
-                    <div class="mock-rooms">
-
-                        <div class="mock-room">
-                            <span class="r-no">A-01</span>
-                            <span class="r-name">Budi Santoso</span>
-                            <span class="chip green">Terisi</span>
-                        </div>
-
-                        <div class="mock-room">
-                            <span class="r-no">A-02</span>
-                            <span class="r-name">Siti Aminah</span>
-                            <span class="chip green">Terisi</span>
-                        </div>
-
-                        <div class="mock-room">
-                            <span class="r-no">A-03</span>
-                            <span class="r-name">Kosong</span>
-                            <span class="chip gray">Kosong</span>
-                        </div>
-
-                        <div class="mock-room">
-                            <span class="r-no">B-01</span>
-                            <span class="r-name">Perbaikan AC</span>
-                            <span class="chip amber">Perbaikan</span>
-                        </div>
-
-                        <div class="mock-room">
-                            <span class="r-no">B-02</span>
-                            <span class="r-name">Kosong</span>
-                            <span class="chip gray">Kosong</span>
-                        </div>
-
+                    <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #fff;">
+                        <span style="color: #22c55e; font-weight: bold;">✓</span>
+                        <span>Fasilitas lengkap (AC, WiFi, KM Dalam)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #fff;">
+                        <span style="color: #22c55e; font-weight: bold;">✓</span>
+                        <span>Bukti sewa digital &amp; kuitansi resmi</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #fff;">
+                        <span style="color: #22c55e; font-weight: bold;">✓</span>
+                        <span>Bantuan perbaikan kamar cepat tanggap</span>
                     </div>
                 </div>
             </div>
@@ -101,7 +68,7 @@
     </div>
 
     <div class="auth-visual-foot">
-        © {{ date('Y') }} KosFly Management System.
+        © {{ date('Y') }} KosFly Residence. Hak cipta dilindungi.
     </div>
 </aside>
 

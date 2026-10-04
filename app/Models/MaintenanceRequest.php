@@ -13,6 +13,7 @@ class MaintenanceRequest extends Model
         "title",
         "description",
         "image_path",
+        "completion_image",
         "priority",
         "status",
         "cost",

@@ -9,137 +9,275 @@
             <span class="current">Dashboard</span>
           </nav>
           <h2 class="page-title">Dashboard</h2>
-          <p class="page-sub" id="pageSub">Ringkasan operasional</p>
+          <p class="page-sub">Ringkasan operasional kos dan aktivitas terkini.</p>
         </div>
-        <!-- Role demo — hapus saat pakai auth() di Laravel -->
-        <span class="tag tag-accent" id="roleChip">Preview: Admin</span>
+        <div>
+          @if(auth()->user() && auth()->user()->roles->isNotEmpty())
+            <span class="tag tag-accent">{{ auth()->user()->roles->first()->name }}</span>
+          @else
+            <span class="tag tag-accent">Pengelola</span>
+          @endif
+        </div>
       </section>
 
-      <!-- Kartu statistik -->
+      <!-- 4 Kartu Statistik Ringkasan -->
       <section class="grid-4" aria-label="Statistik">
         <div class="card elev-sm stat-card" style="border-top:2px solid var(--color-neutral-900)">
           <div class="stat-label">Total Kamar</div>
-          <div class="stat-value" id="statTotalKamar">0</div>
-          <div class="stat-sub muted" id="statSubKamar">—</div>
+          <div class="stat-value">{{ $totalRooms }}</div>
+          <div class="stat-sub muted">{{ $availableRooms }} kamar kosong tersedia</div>
         </div>
+
         <div class="card elev-sm stat-card" style="border-top:2px solid var(--color-neutral-900)">
           <div class="stat-label">Penghuni Aktif</div>
-          <div class="stat-value" id="statPenghuniAktif">0</div>
-          <div class="stat-sub muted" id="statSubPenghuni">—</div>
+          <div class="stat-value">{{ $activeLeases }}</div>
+          <div class="stat-sub muted">dari {{ $totalTenants }} total penghuni</div>
         </div>
+
         <div class="card elev-sm stat-card" style="border-top:2px solid var(--color-neutral-900)">
           <div class="stat-label">Pendapatan Bulan Ini</div>
-          <div class="stat-value" id="statPendapatan">Rp 0</div>
-          <div class="stat-sub muted" id="statSubPendapatan">—</div>
+          <div class="stat-value">Rp {{ number_format($monthlyIncome, 0, ',', '.') }}</div>
+          <div class="stat-sub muted">{{ now()->translatedFormat('F Y') }}</div>
         </div>
+
         <div class="card elev-sm stat-card" style="border-top:2px solid var(--color-accent)">
           <div class="stat-label">Tagihan Belum Dibayar</div>
-          <div class="stat-value" id="statTunggak">Rp 0</div>
-          <div class="stat-sub" id="statSubTunggak" style="color:var(--color-accent-700)">—</div>
+          <div class="stat-value">Rp {{ number_format($unpaidSum, 0, ',', '.') }}</div>
+          <div class="stat-sub" style="color:var(--color-accent-700)">{{ $unpaidCount }} tagihan menunggu</div>
         </div>
       </section>
 
-      <!-- Chart pendapatan + okupansi -->
-      <section class="grid-32" aria-label="Grafik">
+      <!-- Chart Pendapatan + Okupansi Donut -->
+      <section class="grid-32" aria-label="Grafik operasional">
         <div class="card elev-sm" style="padding:20px">
           <div class="card-head">
-            <h3 class="card-title">Pendapatan 6 Bulan Terakhir</h3>
-            <span class="small muted">dalam juta Rp</span>
+            <div>
+              <h3 class="card-title">Pendapatan 6 Bulan Terakhir</h3>
+              <span class="small muted">Tren penerimaan pembayaran sewa kos</span>
+            </div>
+            <a href="{{ route('reports.index') }}" class="btn btn-ghost" style="font-size:13px">Lihat Laporan</a>
           </div>
-          <div class="chart-bars" id="chartBars"></div>
-          <div class="chart-labels" id="chartLabels"></div>
+
+          <div class="chart-bars">
+            @foreach($chartMonths as $cm)
+              <div class="chart-col">
+                <div class="chart-val">
+                  @if($cm['amount'] >= 1000000)
+                    {{ number_format($cm['amount'] / 1000000, 1) }}jt
+                  @elseif($cm['amount'] > 0)
+                    {{ number_format($cm['amount'] / 1000, 0) }}rb
+                  @else
+                    0
+                  @endif
+                </div>
+                <div class="chart-bar" style="height: {{ $cm['pct'] }}%" title="{{ $cm['full'] }}: Rp {{ number_format($cm['amount'], 0, ',', '.') }}"></div>
+              </div>
+            @endforeach
+          </div>
+
+          <div class="chart-labels">
+            @foreach($chartMonths as $cm)
+              <span>{{ $cm['label'] }}</span>
+            @endforeach
+          </div>
         </div>
 
+        <!-- Donut Okupansi Kamar -->
         <div class="card elev-sm" style="padding:20px">
           <h3 class="card-title">Okupansi Kamar</h3>
           <div class="flex donut-wrap">
-            <!-- Donut: nilai dash diisi oleh app.js -->
             <svg width="150" height="150" viewBox="0 0 150 150" role="img" aria-label="Okupansi kamar">
+              <!-- Background lingkaran dasar -->
               <circle cx="75" cy="75" r="56" fill="none" stroke="var(--color-neutral-200)" stroke-width="22"></circle>
-              <g transform="rotate(-90 75 75)">
-                <circle id="donutTerisi" cx="75" cy="75" r="56" fill="none" stroke="var(--color-neutral-900)" stroke-width="22" stroke-dasharray="0 351.9"></circle>
-                <circle id="donutKosong" cx="75" cy="75" r="56" fill="none" stroke="var(--color-neutral-200)" stroke-width="22" stroke-dasharray="0 351.9"></circle>
-                <circle id="donutPerbaikan" cx="75" cy="75" r="56" fill="none" stroke="var(--color-accent)" stroke-width="22" stroke-dasharray="0 351.9"></circle>
-              </g>
-              <text id="donutPct" x="75" y="71" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="26" fill="var(--color-text)">0%</text>
-              <text x="75" y="90" text-anchor="middle" font-size="10" fill="var(--color-neutral-600)">terisi</text>
+              <!-- Segmen Terisi (Hitam) -->
+              <circle cx="75" cy="75" r="56" fill="none" stroke="var(--color-neutral-900)" stroke-width="22"
+                      stroke-dasharray="{{ $dashTerisi }} {{ $circumference }}"
+                      transform="rotate(-90 75 75)"></circle>
+              <!-- Segmen Perbaikan (Merah Akses) jika ada -->
+              @if($dashPerbaikan > 0)
+                <circle cx="75" cy="75" r="56" fill="none" stroke="var(--color-accent)" stroke-width="22"
+                        stroke-dasharray="{{ $dashPerbaikan }} {{ $circumference }}"
+                        transform="rotate({{ -90 + ($dashTerisi / $circumference * 360) }} 75 75)"></circle>
+              @endif
+              <text x="75" y="73" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="26" fill="var(--color-text)">
+                {{ $occupancyPct }}%
+              </text>
+              <text x="75" y="90" text-anchor="middle" font-size="11" fill="var(--color-neutral-600)">terisi</text>
             </svg>
+
             <div class="legend">
-              <div class="flex"><span class="sw" style="background:var(--color-neutral-900)"></span>Terisi — <span id="legendTerisi">0</span></div>
-              <div class="flex"><span class="sw" style="background:var(--color-neutral-200);border:1px solid var(--color-divider)"></span>Kosong — <span id="legendKosong">0</span></div>
-              <div class="flex"><span class="sw" style="background:var(--color-accent)"></span>Perbaikan — <span id="legendPerbaikan">0</span></div>
+              <div class="flex items-center" style="gap:6px">
+                <span class="sw" style="background:var(--color-neutral-900)"></span>
+                Terisi — <strong>{{ $occupiedRooms }}</strong>
+              </div>
+              <div class="flex items-center" style="gap:6px">
+                <span class="sw" style="background:var(--color-neutral-200);border:1px solid var(--color-divider)"></span>
+                Kosong — <strong>{{ $availableRooms }}</strong>
+              </div>
+              <div class="flex items-center" style="gap:6px">
+                <span class="sw" style="background:var(--color-accent)"></span>
+                Perbaikan — <strong>{{ $maintRooms }}</strong>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Pembayaran terbaru + maintenance -->
-      <section class="grid-32" aria-label="Aktivitas">
+      <!-- Pembayaran Terbaru & Maintenance Aktif -->
+      <section class="grid-32" aria-label="Aktivitas operasional terkini">
         <div class="card elev-sm" style="padding:20px">
           <div class="card-head">
             <h3 class="card-title">Pembayaran Terbaru</h3>
             <div class="flex" style="gap:8px">
-              <button class="btn btn-primary" data-action="pay-new" style="font-size:13px">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                Catat
-              </button>
-              <a class="btn btn-ghost" href="payments.html" style="font-size:13px;text-decoration:none">Lihat semua</a>
+              @if(!auth()->user() || !auth()->user()->hasRole('owner'))
+                <a class="btn btn-primary" href="{{ route('payments.create') }}" style="font-size:13px">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                  Catat
+                </a>
+              @endif
+              <a class="btn btn-ghost" href="{{ route('payments.index') }}" style="font-size:13px">Lihat semua</a>
             </div>
+
           </div>
+
           <div class="table-wrap">
             <table class="table">
               <thead>
-                <tr><th>Penghuni</th><th>Kamar</th><th>Bulan</th><th>Tanggal</th><th>Metode</th><th>Jumlah</th><th>Status</th><th>Aksi</th></tr>
+                <tr>
+                  <th>Penghuni</th>
+                  <th>Kamar</th>
+                  <th>Jumlah</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
               </thead>
-              <tbody id="paymentsBody"></tbody>
+              <tbody>
+                @forelse($recentPayments as $pay)
+                  <tr>
+                    <td class="font-semibold">{{ $pay->lease->tenant->user->name ?? '—' }}</td>
+                    <td>Kamar {{ $pay->lease->room->room_number ?? '—' }}</td>
+                    <td class="font-semibold">Rp {{ number_format($pay->amount, 0, ',', '.') }}</td>
+                    <td>
+                      @if($pay->status === 'paid')
+                        <span class="tag tag-accent">Lunas</span>
+                      @elseif($pay->status === 'pending')
+                        <span class="tag tag-outline">Menunggu</span>
+                      @elseif($pay->status === 'overdue')
+                        <span class="tag tag-accent" style="background:#dc2626">Terlambat</span>
+                      @else
+                        <span class="tag tag-outline">Belum Bayar</span>
+                      @endif
+                    </td>
+                    <td>
+                      <a href="{{ route('payments.show', $pay) }}" class="btn btn-ghost btn-sm">Lihat</a>
+                    </td>
+                  </tr>
+                @empty
+                  <tr>
+                    <td colspan="5" class="text-center py-4 text-neutral-500">
+                      Belum ada transaksi pembayaran.
+                    </td>
+                  </tr>
+                @endforelse
+              </tbody>
             </table>
           </div>
         </div>
 
         <div class="card elev-sm" style="padding:20px">
           <div class="card-head">
-            <h3 class="card-title">Maintenance / Keluhan</h3>
-            <button class="btn btn-ghost" data-action="maint-new" style="font-size:13px;text-decoration:none">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-              Tambah
-            </button>
+            <h3 class="card-title">Maintenance / Keluhan Aktif</h3>
+            @if(!auth()->user() || !auth()->user()->hasRole('owner'))
+              <a class="btn btn-ghost" href="{{ route('maintenance.create') }}" style="font-size:13px">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                Tambah
+              </a>
+            @endif
           </div>
-          <div id="complaintsList"></div>
+
+          <div>
+            @forelse($activeComplaints as $complaint)
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:12px 0; border-bottom:1px solid var(--color-divider)">
+                <div>
+                  <div style="font-weight:600; font-size:14px; margin-bottom:2px">
+                    <a href="{{ route('maintenance.show', $complaint) }}" style="text-decoration:none; color:inherit">
+                      {{ $complaint->title }}
+                    </a>
+                  </div>
+                  <div class="small muted">
+                    Kamar {{ $complaint->room->room_number ?? '—' }} · Oleh {{ $complaint->tenant->user->name ?? 'Penghuni' }}
+                  </div>
+                </div>
+                <div>
+                  @if($complaint->priority === 'high')
+                    <span class="tag tag-accent">Darurat</span>
+                  @else
+                    <span class="tag tag-outline">{{ ucfirst($complaint->priority) }}</span>
+                  @endif
+                </div>
+              </div>
+            @empty
+              <p class="small muted py-4 text-center" style="margin:0">
+                Tidak ada laporan keluhan yang sedang aktif.
+              </p>
+            @endforelse
+          </div>
         </div>
       </section>
 
-      <!-- Kelola kamar -->
+      <!-- Sekilas Kamar Kos (Khusus Admin & Owner) -->
+      @if(!auth()->user() || (!auth()->user()->hasRole('staff') && !auth()->user()->hasRole('tenant')))
       <section class="card elev-sm section-card" id="section-kamar" aria-label="Kelola kamar">
         <div class="card-head">
           <div>
-            <h3 class="card-title">Kelola Kamar</h3>
-            <p class="small muted" id="kamarSub"></p>
+            <h3 class="card-title">Sekilas Kamar Kos</h3>
+            <p class="small muted" style="margin:0">Daftar kamar kos terdaftar di sistem</p>
           </div>
-          <button class="btn btn-primary" data-action="room-new">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-            Tambah Kamar
-          </button>
+          <div class="flex" style="gap:8px">
+            @if(!auth()->user() || !auth()->user()->hasRole('owner'))
+              <a href="{{ route('rooms.create') }}" class="btn btn-primary" style="font-size:13px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                Tambah Kamar
+              </a>
+            @endif
+            <a href="{{ route('rooms.index') }}" class="btn btn-secondary" style="font-size:13px">
+              Lihat Semua Kamar
+            </a>
+          </div>
         </div>
 
-        <div class="toolbar">
-          <select class="input" data-filter="kamar-status" name="filterStatus" aria-label="Filter status kamar">
-            <option value="Semua">Semua status</option>
-            <option value="Kosong">Kosong</option>
-            <option value="Terisi">Terisi</option>
-            <option value="Perbaikan">Perbaikan</option>
-          </select>
-          <select class="input" data-filter="kamar-tipe" name="filterTipe" aria-label="Filter tipe kamar">
-            <option value="Semua">Semua tipe</option>
-            <option value="Standar">Standar</option>
-            <option value="Deluxe">Deluxe</option>
-            <option value="Premium">Premium</option>
-          </select>
-          <input class="input" data-filter="kamar-q" name="filterQ" placeholder="Cari nomor kamar…" aria-label="Cari kamar">
-          <span class="small muted flex-1" id="kamarCount" style="text-align:right"></span>
-        </div>
 
-        <div class="grid-4" id="roomsGrid"></div>
+        <div class="grid-4" style="gap:16px; margin-top:10px">
+          @forelse($rooms as $room)
+            <div class="card elev-sm" style="padding:14px; border:1px solid var(--color-divider); display:flex; flex-direction:column; justify-content:space-between;">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+                  <strong style="font-size:16px">Kamar {{ $room->room_number }}</strong>
+                  @if($room->status === 'occupied')
+                    <span class="tag tag-accent">Terisi</span>
+                  @elseif($room->status === 'available')
+                    <span class="tag tag-outline">Kosong</span>
+                  @else
+                    <span class="tag tag-outline">Perbaikan</span>
+                  @endif
+                </div>
+                <div class="small muted" style="margin-bottom:6px">Lantai {{ $room->floor }}</div>
+                <div style="font-weight:700; font-size:14px; color:var(--color-neutral-900)">
+                  Rp {{ number_format($room->price, 0, ',', '.') }}<span class="small muted" style="font-weight:400">/bln</span>
+                </div>
+              </div>
+              <div style="margin-top:12px; padding-top:8px; border-top:1px solid var(--color-divider)">
+                <a href="{{ route('rooms.show', $room) }}" class="btn btn-ghost btn-sm" style="width:100%; justify-content:center">
+                  Detail Kamar
+                </a>
+              </div>
+            </div>
+          @empty
+            <p class="small muted col-span-4 text-center py-4">Belum ada data kamar.</p>
+          @endforelse
+        </div>
       </section>
+      @endif
 
     </main>
 @endsection

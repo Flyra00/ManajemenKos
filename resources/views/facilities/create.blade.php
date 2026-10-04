@@ -1,58 +1,75 @@
 @extends('layouts.app')
 @section('content')
-    <main class="max-w-[1200px] w-full mx-auto p-6 flex flex-col gap-5">
+    <main class="page">
 
-      <section class="flex items-end justify-between gap-4 flex-wrap" aria-label="Judul halaman">
+      <section class="page-head" aria-label="Judul halaman">
         <div>
-          <nav class="flex items-center gap-1.5 flex-wrap text-xs text-neutral-600 mb-1" aria-label="Breadcrumb">
-            <a class="no-underline text-ink font-medium hover:text-accent" href="index.html">Dashboard</a>
-            <span class="text-neutral-400">/</span>
-            <a class="no-underline text-ink font-medium hover:text-accent" href="facility-index.html">Facilities</a>
-            <span class="text-neutral-400">/</span>
-            <span class="text-neutral-600">Add Facility</span>
+          <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a href="{{ route('dashboard') }}">Dashboard</a>
+            <span class="sep">/</span>
+            <a href="{{ route('facilities.index') }}">Fasilitas</a>
+            <span class="sep">/</span>
+            <span class="current">Tambah Fasilitas</span>
           </nav>
-          <h2 class="text-[26px]">Add Facility</h2>
-          <p class="m-0 mt-1 text-[13px] text-neutral-600">Tambahkan fasilitas baru yang tersedia di kos.</p>
+          <h2 class="page-title">Tambah Fasilitas</h2>
+          <p class="page-sub">Lengkapi nama dan deskripsi fasilitas baru yang tersedia di kos.</p>
         </div>
-        <!-- NANTI HUBUNGKAN KE route('facilities.index') -->
-        <a href="facility-index.html" class="btn btn-secondary">Kembali</a>
       </section>
 
-      <!-- Flash message — Blade: @if($errors->any()) … @endif -->
-      <div class="hidden items-center gap-2 border-2 border-ink/40 bg-surface px-3 py-2 text-sm" role="alert">
-        <span>(contoh tampilan error validation — Blade: @error di setiap field)</span>
-      </div>
+      {{-- Ringkasan error validasi --}}
+      @if($errors->any())
+        <div class="alert alert-error" role="alert">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+          <span>Terdapat kesalahan pada form. Periksa kembali isian di bawah.</span>
+        </div>
+      @endif
 
-      <!-- Form tambah facility -->
-      <section class="card" aria-label="Form tambah facility">
-        <h3 class="card-title">Data Facility</h3>
+      <form method="POST" action="{{ route('facilities.store') }}" novalidate>
+        @csrf
 
-        <!-- NANTI HUBUNGKAN FORM KE facilities.store
-             Blade: <form method="POST" action="{{ route('facilities.store') }}">
-             Blade: @csrf (letakkan tepat di bawah tag <form>) -->
-        <form method="POST" action="#" class="flex flex-col gap-4">
+        <div class="form-layout">
 
-          <div class="field">
-            <label class="field-label" for="name">Facility Name</label>
-            <input class="input" type="text" id="name" name="name" placeholder="Mis. WiFi, AC, Kasur" required> value="{{ old('name') }}" (agar isian tetap ada saat validasi gagal)
-                 Blade: @error('name') <span class="small text-accent-800">{{ $message }}</span> @enderror
+          <!-- ============ FORM UTAMA ============ -->
+          <div class="card elev-sm form-card">
+            <div class="field">
+              <label for="name">Nama Fasilitas <span class="text-accent">*</span></label>
+              <input class="input @error('name') is-invalid @enderror" type="text" id="name" name="name" value="{{ old('name') }}" placeholder="Contoh: WiFi Cepat, AC Inverter, Parkir Motor, Dapur Bersama" required>
+              @error('name')
+                <p class="form-error">{{ $message }}</p>
+              @enderror
+            </div>
+
+            <h3 class="form-section-title">Deskripsi Fasilitas</h3>
+            <div class="field">
+              <label for="description">Deskripsi</label>
+              <textarea class="input @error('description') is-invalid @enderror" id="description" name="description" rows="4" placeholder="Jelaskan detail fasilitas ini, misalnya kapasitas, aturan pakai, atau spesifikasinya…">{{ old('description') }}</textarea>
+              @error('description')
+                <p class="form-error">{{ $message }}</p>
+              @enderror
+            </div>
           </div>
 
-          <div class="field">
-            <label class="field-label" for="description">Description</label>
-            <textarea class="input" id="description" name="description" rows="5" placeholder="Jelaskan fasilitas ini, misalnya kecepatan, kapasitas, atau lokasinya…"></textarea>
-             {{ old('description') }}
-                 @error('description') <span class="small text-accent-800">{{ $message }}</span> @enderror
+          <!-- ============ SIDE PANEL INFORMASI ============ -->
+          <div class="card elev-sm form-card photo-card">
+            <h3 class="card-title">Informasi & Panduan</h3>
+            <div style="font-size:13px; line-height:1.6; color:var(--color-neutral-700)">
+              <p style="margin:0 0 10px">
+                Fasilitas yang Anda daftarkan di sini nantinya dapat dipilih saat menambahkan atau mengedit data <strong>Kamar Kos</strong>.
+              </p>
+              <p style="margin:0 0 10px">
+                Fasilitas ini juga akan tampil pada halaman profil detail kamar sebagai penunjang informasi bagi calon penghuni kos.
+              </p>
+            </div>
           </div>
 
-          <div class="flex justify-end gap-2 pt-2">
-            <!-- NANTI HUBUNGKAN KE route('facilities.index') -->
-            <a href="facility-index.html" class="btn btn-secondary">Cancel</a>
-            <button type="submit" class="btn btn-primary">Save Facility</button>
-          </div>
+        </div>
 
-        </form>
-      </section>
+        <div class="form-actions" style="margin-top:20px">
+          <button type="submit" class="btn btn-primary">Simpan Fasilitas</button>
+          <a href="{{ route('facilities.index') }}" class="btn btn-secondary">Batal</a>
+        </div>
+      </form>
 
     </main>
 @endsection
+

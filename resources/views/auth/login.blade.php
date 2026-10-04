@@ -31,144 +31,54 @@
     <div class="auth-visual-content">
 
         <h1>
-            Manajemen Kos,<br>
-            Lebih Mudah.
+            Hunian Kos Nyaman,<br>
+            Modern &amp; Terpercaya.
         </h1>
 
         <p>
-            Kelola kamar, penghuni, pembayaran,
-            dan operasional kos Anda dalam satu dashboard.
+            Masuk ke akun Anda untuk mengelola sewa kamar,
+            memeriksa invoice tagihan, dan menikmati layanan hunian KosFly.
         </p>
 
 
-        <!-- ===================== DASHBOARD MOCKUP ===================== -->
+        <!-- ===================== ROOM / TENANT PREVIEW CARD ===================== -->
         <div
             class="auth-mock"
             aria-hidden="true"
         >
-
-            <div class="mock-grid-2">
-
-                <!-- Kamar Terisi -->
-                <div class="mock-stat">
-
-                    <div class="mock-stat-label">
-                        Kamar Terisi
-                    </div>
-
-                    <div class="mock-stat-value">
-                        <b
-                            class="count-num"
-                            data-count="7"
-                        >
-                            7
-                        </b>
-
-                        <small>/ 12</small>
-                    </div>
-
-                </div>
-
-
-                <!-- Pendapatan -->
-                <div class="mock-stat">
-
-                    <div class="mock-stat-label">
-                        Pendapatan
-                    </div>
-
-                    <div class="mock-stat-value">
-
-                        Rp
-
-                        <b
-                            class="count-num"
-                            data-count="24.5"
-                            data-decimals="1"
-                        >
-                            24,5
-                        </b>
-
-                        <small>jt</small>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- Chart -->
-            <div class="mock-chart">
-
-                <div class="mock-chart-head">
-
-                    <span class="mock-chart-title">
-                        Pendapatan 6 Bulan
+            <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 18px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-accent-400); font-weight: 700;">
+                        Portal Penghuni &amp; Sewa
                     </span>
-
-                    <span class="mock-chart-legend">
-
-                        <span class="lg">
-                            Masuk
-                        </span>
-
-                        <span class="lg lg-2">
-                            Keluar
-                        </span>
-
+                    <span style="background: #22c55e; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">
+                        Aktif
                     </span>
-
                 </div>
-
-
-                <div class="mock-cols">
-
-                    <div class="mock-col">
-                        <b style="height:45%"></b>
-                        <i style="height:30%"></i>
-                    </div>
-
-                    <div class="mock-col">
-                        <b style="height:55%"></b>
-                        <i style="height:35%"></i>
-                    </div>
-
-                    <div class="mock-col">
-                        <b style="height:50%"></b>
-                        <i style="height:38%"></i>
-                    </div>
-
-                    <div class="mock-col">
-                        <b style="height:65%"></b>
-                        <i style="height:40%"></i>
-                    </div>
-
-                    <div class="mock-col">
-                        <b style="height:70%"></b>
-                        <i style="height:48%"></i>
-                    </div>
-
-                    <div class="mock-col">
-                        <b
-                            class="hl"
-                            style="height:80%"
-                        ></b>
-
-                        <i style="height:52%"></i>
-                    </div>
-
+                <div style="font-size: 16px; font-weight: 800; color: #ffffff; margin-bottom: 4px;">
+                    KosFly Residence
                 </div>
-
+                <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 14px;">
+                    Akses cepat bukti sewa, status kamar, dan invoice resmi
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 6px;">
+                        <div style="font-size: 10px; color: rgba(255,255,255,0.6);">Layanan</div>
+                        <div style="font-size: 12px; font-weight: 700; color: #fff;">Sewa &amp; Tagihan</div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.2); padding: 8px 10px; border-radius: 6px;">
+                        <div style="font-size: 10px; color: rgba(255,255,255,0.6);">Bantuan</div>
+                        <div style="font-size: 12px; font-weight: 700; color: #fff;">Tiket Perbaikan</div>
+                    </div>
+                </div>
             </div>
-
         </div>
 
     </div>
 
 
     <div class="auth-visual-foot">
-        © {{ date('Y') }} KosFly Management System.
+        © {{ date('Y') }} KosFly Residence. Hak cipta dilindungi.
     </div>
 
 </aside>
@@ -208,6 +118,13 @@
 
         </header>
 
+        <!-- Session Status (Misal setelah reset kata sandi) -->
+        @if (session('status'))
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 12px 14px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; line-height: 1.5; display: flex; gap: 8px; align-items: center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>{{ session('status') }}</span>
+            </div>
+        @endif
 
         <!-- ===================== LOGIN FORM ===================== -->
         <form

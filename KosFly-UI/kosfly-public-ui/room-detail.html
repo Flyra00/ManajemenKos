@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detail Kamar A-01 — KosFly</title>
+  <meta name="description" content="Detail fasilitas, foto, dan formulir pengajuan sewa kamar A-01 di KosFly.">
+
+  <!-- Font Archivo — identitas tipografi KosFly -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet utama KosFly -->
+  <link rel="stylesheet" href="../style.css">
+</head>
+
+<body class="public-page">
+
+  <!-- ============================================================
+       1. NAVBAR PUBLIK
+       ============================================================ -->
+  <header class="site-nav" id="siteNav">
+    <div class="container">
+      <a class="brand" href="index.html" aria-label="KosFly — Beranda">
+        <span class="brand-mark">K</span>
+        Kos<span class="brand-accent">Fly</span>
+      </a>
+
+      <nav aria-label="Navigasi utama">
+        <ul class="nav-links">
+          <li><a href="rooms-public.html" style="font-weight:700; color:var(--color-accent);">Pilihan Kamar</a></li>
+          <li><a href="index.html#beranda">Beranda</a></li>
+          <li><a href="index.html#fitur">Fitur</a></li>
+          <li><a href="index.html#tentang">Tentang</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-cta">
+        <a class="btn btn-secondary btn-sm" href="login.html">Masuk</a>
+        <a class="btn btn-primary btn-sm" href="register.html">Daftar</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       2. KONTEN UTAMA: DETAIL KAMAR & FORMULIR SEWA
+       ============================================================ -->
+  <main style="padding: 40px 0 80px;">
+    <div class="container">
+
+      <!-- Breadcrumb Navigasi -->
+      <!-- DATA WILL LATER COME FROM BLADE: {{ $room->room_number }} -->
+      <nav class="breadcrumb" style="margin-bottom: 24px;" aria-label="Breadcrumb">
+        <a href="index.html">Beranda</a>
+        <span class="sep">/</span>
+        <a href="rooms-public.html">Pilihan Kamar</a>
+        <span class="sep">/</span>
+        <span class="current">Kamar A-01</span>
+      </nav>
+
+      <!-- Layout 2 Kolom: Kiri Spesifikasi, Kanan Form Booking -->
+      <div class="grid-2" style="gap: 32px; align-items: flex-start;">
+
+        <!-- ==========================================
+             KOLOM KIRI: SPESIFIKASI & FASILITAS KAMAR
+             ========================================== -->
+        <div>
+          <!-- Foto Utama Kamar -->
+          <div class="card elev-sm" style="padding: 0; overflow: hidden; margin-bottom: 24px; border: 1px solid var(--color-divider); border-radius: 8px;">
+            <div style="height: 360px; background: var(--color-neutral-100); position: relative;">
+              <!-- THIS IMAGE WILL LATER BECOME: src="{{ asset('storage/' . $room->image) }}" -->
+              <img src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1000&q=80" alt="Foto Kamar A-01" style="width: 100%; height: 100%; object-fit: cover;">
+              <span class="tag tag-accent" style="position: absolute; top: 16px; right: 16px; font-weight: 700; font-size: 13px;">
+                Tersedia untuk Disewa
+              </span>
+            </div>
+          </div>
+
+          <!-- Rincian Informasi Kamar -->
+          <div class="card elev-sm" style="padding: 28px; border: 1px solid var(--color-divider); border-radius: 8px;">
+            
+            <!-- Judul & Harga -->
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; border-bottom: 1px solid var(--color-divider); padding-bottom: 16px;">
+              <div>
+                <!-- THIS VALUE WILL LATER BECOME: Kamar {{ $room->room_number }} -->
+                <h1 style="font-size: 28px; font-weight: 800; margin: 0 0 4px; color: var(--color-neutral-900);">
+                  Kamar A-01
+                </h1>
+                <!-- THIS VALUE WILL LATER BECOME: Lantai {{ $room->floor }} -->
+                <span class="muted small">Lantai 1 · KosFly Sukabirus Residence</span>
+              </div>
+              <div style="text-align: right;">
+                <!-- THIS VALUE WILL LATER BECOME: Rp {{ number_format($room->price, 0, ',', '.') }} -->
+                <div style="font-size: 26px; font-weight: 800; color: var(--color-neutral-900);">
+                  Rp 1.500.000
+                </div>
+                <span class="small muted">per bulan</span>
+              </div>
+            </div>
+
+            <!-- Fasilitas Kamar Lengkap -->
+            <!-- DATA WILL LATER COME FROM BLADE: @foreach($room->facilities as $fac) -->
+            <div style="margin-bottom: 24px;">
+              <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 12px; color: var(--color-neutral-900);">
+                Fasilitas Kamar
+              </h3>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <span class="tag tag-neutral" style="font-size: 13px; padding: 6px 12px;">✓ AC Inverter</span>
+                <span class="tag tag-neutral" style="font-size: 13px; padding: 6px 12px;">✓ Kamar Mandi Dalam</span>
+                <span class="tag tag-neutral" style="font-size: 13px; padding: 6px 12px;">✓ Kasur Springbed (Queen Size)</span>
+                <span class="tag tag-neutral" style="font-size: 13px; padding: 6px 12px;">✓ Lemari Pakaian 2 Pintu</span>
+                <span class="tag tag-neutral" style="font-size: 13px; padding: 6px 12px;">✓ Meja & Kursi Belajar</span>
+                <span class="tag tag-neutral" style="font-size: 13px; padding: 6px 12px;">✓ WiFi High Speed 50 Mbps</span>
+              </div>
+            </div>
+
+            <!-- Deskripsi Kamar -->
+            <!-- THIS VALUE WILL LATER BECOME: {{ $room->description }} -->
+            <div style="margin-bottom: 24px;">
+              <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 8px; color: var(--color-neutral-900);">
+                Deskripsi Kamar
+              </h3>
+              <p style="margin: 0; font-size: 14px; color: var(--color-neutral-700); line-height: 1.6;">
+                Kamar tipe deluxe di lantai 1 dengan ventilasi dan pencahayaan alami yang sangat baik. Menghadap langsung ke area taman dalam kos, memberikan suasana tenang untuk belajar maupun istirahat. Dilengkapi kamar mandi pribadi dengan shower.
+              </p>
+            </div>
+
+            <!-- Aturan Umum Kos -->
+            <div style="margin-bottom: 24px; padding: 16px; background: var(--color-neutral-50); border: 1px solid var(--color-divider); border-radius: 6px;">
+              <h4 style="font-size: 14px; font-weight: 700; margin: 0 0 8px; color: var(--color-neutral-900);">
+                Ketentuan & Tata Tertib Kos:
+              </h4>
+              <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: var(--color-neutral-700); line-height: 1.6;">
+                <li>Gerbang utama menggunakan akses kunci pintar 24 jam.</li>
+                <li>Tamu lawan jenis hanya diperkenankan di ruang tamu komunal.</li>
+                <li>Biaya sewa sudah termasuk air bersih dan internet WiFi.</li>
+              </ul>
+            </div>
+
+            <!-- Kontak WhatsApp Pengelola -->
+            <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 16px; border-top: 1px solid var(--color-divider);">
+              <span class="small muted">Butuh survey langsung atau tanya-tanya?</span>
+              <a href="https://wa.me/6281234567890" target="_blank" class="btn btn-secondary btn-sm">
+                Chat Pengelola di WhatsApp
+              </a>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ==========================================
+             KOLOM KANAN: FORMULIR SEWA & BOOKING CARD
+             ========================================== -->
+        <div>
+          <div class="card elev-sm" style="padding: 24px; border: 1px solid var(--color-divider); border-radius: 8px; position: sticky; top: 20px;">
+            <h2 style="font-size: 20px; font-weight: 800; margin: 0 0 6px; color: var(--color-neutral-900);">
+              Formulir Sewa Kamar
+            </h2>
+            <p class="small muted" style="margin: 0 0 20px; line-height: 1.5;">
+              Isi data Anda di bawah ini untuk memesan kamar dan menerbitkan invoice resmi Anda.
+            </p>
+
+            <!-- FORMULIR PENGAJUAN SEWA -->
+            <!-- FORM ACTION WILL LATER BECOME: action="{{ route('public.rooms.book', $room) }}" -->
+            <form method="POST" action="invoice.html" style="display: flex; flex-direction: column; gap: 16px;">
+              
+              <!-- Nama Lengkap Calon Tenant -->
+              <div class="field">
+                <label for="name">Nama Lengkap <span class="text-accent">*</span></label>
+                <input class="input" type="text" id="name" name="name" placeholder="Sesuai nama KTP" required>
+              </div>
+
+              <!-- Alamat Email -->
+              <div class="field">
+                <label for="email">Alamat Email <span class="text-accent">*</span></label>
+                <input class="input" type="email" id="email" name="email" placeholder="contoh@gmail.com" required>
+              </div>
+
+              <!-- Nomor WhatsApp -->
+              <div class="field">
+                <label for="phone">Nomor WhatsApp / HP <span class="text-accent">*</span></label>
+                <input class="input" type="text" id="phone" name="phone" placeholder="08123456789" required>
+              </div>
+
+              <!-- Kata Sandi Akun Baru (Auto-Register) -->
+              <div class="field">
+                <label for="password">Kata Sandi Akun Baru <span class="text-accent">*</span></label>
+                <input class="input" type="password" id="password" name="password" placeholder="Minimal 8 karakter" required>
+                <span class="small muted" style="font-size: 11px;">Digunakan untuk login akun tenant Anda nantinya.</span>
+              </div>
+
+              <!-- Tanggal Mulai Menghuni -->
+              <div class="field">
+                <label for="start_date">Tanggal Mulai Menghuni <span class="text-accent">*</span></label>
+                <input class="input" type="date" id="start_date" name="start_date" required>
+              </div>
+
+              <!-- Pilihan Durasi Sewa -->
+              <div class="field">
+                <label for="duration_months">Durasi Sewa Awal</label>
+                <select class="input" id="duration_months" name="duration_months">
+                  <option value="1">1 Bulan (Rp 1.500.000)</option>
+                  <option value="3">3 Bulan (Rp 4.500.000)</option>
+                  <option value="6">6 Bulan (Rp 9.000.000)</option>
+                  <option value="12">12 Bulan / 1 Tahun (Rp 18.000.000)</option>
+                </select>
+              </div>
+
+              <!-- Kotak Rangkuman Biaya -->
+              <div style="padding: 16px; background: var(--color-neutral-50); border: 1px solid var(--color-divider); border-radius: 6px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
+                  <span class="muted">Tarif Kamar:</span>
+                  <span>Rp 1.500.000 / bln</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
+                  <span class="muted">Batas Bayar Invoice:</span>
+                  <span style="font-weight: 700; color: var(--color-accent);">1 x 24 Jam</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid var(--color-divider); font-size: 15px; font-weight: 800;">
+                  <span>Total Tagihan:</span>
+                  <span style="color: var(--color-neutral-900);">Rp 1.500.000</span>
+                </div>
+              </div>
+
+              <!-- Tombol Submit Pemesanan -->
+              <div style="margin-top: 8px;">
+                <a href="invoice.html" class="btn btn-primary btn-block" style="justify-content: center; text-align: center; font-size: 15px; font-weight: 700; padding: 12px 20px;">
+                  Ajukan Sewa & Terbitkan Invoice &rarr;
+                </a>
+              </div>
+
+              <p class="small muted" style="text-align: center; margin: 0; font-size: 12px; line-height: 1.4;">
+                Setelah menekan tombol di atas, nomor invoice resmi akan diterbitkan beserta rekening transfer bank kos.
+              </p>
+            </form>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ============================================================
+       3. FOOTER PUBLIK
+       ============================================================ -->
+  <footer class="site-foot" style="background: var(--color-neutral-900); color: #fff; padding: 40px 0; border-top: 1px solid var(--color-divider);">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+      <div class="brand" style="color: #fff;">
+        Kos<span class="brand-accent">Fly</span>
+      </div>
+      <p class="small" style="color: var(--color-neutral-400); margin: 0;">
+        &copy; 2026 KosFly. Manajemen Kos & Sewa Online Terpadu.
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

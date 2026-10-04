@@ -30,7 +30,7 @@ class UserSeeder extends Seeder
 
         $admin->assignRole('admin');
 
-        $caretaker = User::firstOrCreate(
+        $owner = User::firstOrCreate(
             ['email'=> 'owner@gmail.com'],
             [
                 'name' => 'OwnerRafly',
@@ -39,6 +39,17 @@ class UserSeeder extends Seeder
             ]
         );
 
-        $caretaker->assignRole('Owner');
+        $owner->assignRole('owner');
+
+        $staff = User::firstOrCreate(
+            ['email'=> 'staff@gmail.com'],
+            [
+                'name' => 'StaffKos',
+                'phone'=> '081234567892',
+                'password'=> Hash::make('password'),
+            ]
+        );
+
+        $staff->assignRole('staff');
     }
 }

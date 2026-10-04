@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pilihan Kamar Kos — KosFly</title>
+  <meta name="description" content="Daftar kamar kos yang tersedia untuk disewa di KosFly. Fasilitas lengkap, lokasi strategis, dan proses sewa langsung.">
+
+  <!-- Font Archivo — identitas tipografi KosFly -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet utama KosFly -->
+  <link rel="stylesheet" href="../style.css">
+</head>
+
+<body class="public-page">
+
+  <!-- ============================================================
+       1. NAVBAR PUBLIK
+       ============================================================ -->
+  <header class="site-nav" id="siteNav">
+    <div class="container">
+      <a class="brand" href="index.html" aria-label="KosFly — Beranda">
+        <span class="brand-mark">K</span>
+        Kos<span class="brand-accent">Fly</span>
+      </a>
+
+      <nav aria-label="Navigasi utama">
+        <ul class="nav-links">
+          <!-- MENU AKTIF: PILIHAN KAMAR -->
+          <li><a href="rooms-public.html" class="active" style="font-weight:700; color:var(--color-accent);">Pilihan Kamar</a></li>
+          <li><a href="index.html#beranda">Beranda</a></li>
+          <li><a href="index.html#fitur">Fitur</a></li>
+          <li><a href="index.html#tentang">Tentang</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-cta">
+        <a class="btn btn-secondary btn-sm" href="login.html">Masuk</a>
+        <a class="btn btn-primary btn-sm" href="register.html">Daftar</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       2. KONTEN UTAMA: KATALOG KAMAR
+       ============================================================ -->
+  <main style="padding: 40px 0 80px;">
+    <div class="container">
+
+      <!-- Breadcrumb Navigasi -->
+      <nav class="breadcrumb" style="margin-bottom: 12px;" aria-label="Breadcrumb">
+        <a href="index.html">Beranda</a>
+        <span class="sep">/</span>
+        <span class="current">Pilihan Kamar Tersedia</span>
+      </nav>
+
+      <!-- Header Halaman -->
+      <div style="margin-bottom: 28px;">
+        <h1 style="font-size: 32px; font-weight: 800; margin: 0 0 8px; color: var(--color-neutral-900);">
+          Temukan Kamar Kos Nyaman Anda
+        </h1>
+        <p class="muted" style="margin: 0; font-size: 15px;">
+          Pilih kamar yang sesuai dengan kebutuhan Anda, lihat spesifikasi fasilitas, dan pesan sewa secara langsung.
+        </p>
+      </div>
+
+      <!-- Toolbar Filter & Pencarian -->
+      <!-- DATA WILL LATER BE CONNECTED TO: route('public.rooms.index') with GET parameters -->
+      <div class="card elev-sm" style="padding: 16px 20px; margin-bottom: 32px; border: 1px solid var(--color-divider);">
+        <form method="GET" action="rooms-public.html" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+          
+          <!-- Input Cari Nomor / Tipe Kamar -->
+          <div style="flex: 2; min-width: 220px;">
+            <input class="input" type="text" name="q" placeholder="Cari nomor kamar... (contoh: A-01)">
+          </div>
+
+          <!-- Dropdown Filter Lantai -->
+          <!-- DATA WILL LATER COME FROM BLADE: foreach($floors as $floor) -->
+          <div style="flex: 1; min-width: 140px;">
+            <select class="input" name="floor">
+              <option value="semua">Semua Lantai</option>
+              <option value="1">Lantai 1</option>
+              <option value="2">Lantai 2</option>
+              <option value="3">Lantai 3</option>
+            </select>
+          </div>
+
+          <!-- Dropdown Filter Batas Harga -->
+          <div style="flex: 1; min-width: 160px;">
+            <select class="input" name="max_price">
+              <option value="">Semua Harga</option>
+              <option value="1000000">Maks. Rp 1.000.000</option>
+              <option value="1500000">Maks. Rp 1.500.000</option>
+              <option value="2000000">Maks. Rp 2.000.000</option>
+              <option value="3000000">Maks. Rp 3.000.000</option>
+            </select>
+          </div>
+
+          <!-- Tombol Aksi Filter -->
+          <div style="display: flex; gap: 8px;">
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="rooms-public.html" class="btn btn-secondary">Reset</a>
+          </div>
+        </form>
+      </div>
+
+      <!-- ============================================================
+           GRID DAFTAR KARTU KAMAR (3 Kolom Responsif)
+           ============================================================ -->
+      <!-- DATA WILL LATER COME FROM BLADE: @forelse($rooms as $room) -->
+      <div class="grid-3" style="gap: 24px;">
+
+        <!-- KARTU KAMAR 1 -->
+        <!-- THIS CARD REPEATS IN BLADE @foreach -->
+        <div class="card elev-sm" style="overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--color-divider); border-radius: 8px;">
+          <!-- Foto Kamar dengan Tag Status -->
+          <div style="position: relative; height: 190px; background: var(--color-neutral-100); overflow: hidden;">
+            <img src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80" alt="Foto Kamar A-01" style="width: 100%; height: 100%; object-fit: cover;">
+            <span class="tag tag-accent" style="position: absolute; top: 12px; right: 12px; font-weight: 700;">
+              Tersedia
+            </span>
+          </div>
+
+          <!-- Konten Kamar -->
+          <div style="padding: 20px; display: flex; flex-direction: column; flex: 1; justify-content: space-between;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+                <!-- THIS VALUE WILL LATER BECOME: Kamar {{ $room->room_number }} -->
+                <h3 style="font-size: 20px; font-weight: 800; margin: 0; color: var(--color-neutral-900);">
+                  Kamar A-01
+                </h3>
+                <!-- THIS VALUE WILL LATER BECOME: Lantai {{ $room->floor }} -->
+                <span class="small muted" style="font-weight: 600;">Lantai 1</span>
+              </div>
+
+              <!-- THIS VALUE WILL LATER BECOME: Rp {{ number_format($room->price, 0, ',', '.') }} -->
+              <div style="font-size: 18px; font-weight: 800; color: var(--color-neutral-900); margin-bottom: 12px;">
+                Rp 1.500.000
+                <span class="small muted" style="font-weight: 400; font-size: 13px;">/ bulan</span>
+              </div>
+
+              <!-- Fasilitas Kamar (Pills) -->
+              <!-- DATA WILL LATER COME FROM BLADE: @foreach($room->facilities as $facility) -->
+              <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;">
+                <span class="tag tag-outline" style="font-size: 11px; padding: 2px 8px;">AC</span>
+                <span class="tag tag-outline" style="font-size: 11px; padding: 2px 8px;">Kamar Mandi Dalam</span>
+                <span class="tag tag-outline" style="font-size: 11px; padding: 2px 8px;">WiFi 50 Mbps</span>
+              </div>
+            </div>
+
+            <!-- Tombol Aksi: Ke Halaman Detail & Booking -->
+            <!-- THIS LINK WILL LATER BECOME: href="{{ route('public.rooms.show', $room) }}" -->
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-divider);">
+              <a href="room-detail.html" class="btn btn-primary btn-block" style="justify-content: center; text-align: center;">
+                Lihat Detail & Sewa
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- KARTU KAMAR 2 -->
+        <div class="card elev-sm" style="overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--color-divider); border-radius: 8px;">
+          <div style="position: relative; height: 190px; background: var(--color-neutral-100); overflow: hidden;">
+            <img src="https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=600&q=80" alt="Foto Kamar A-02" style="width: 100%; height: 100%; object-fit: cover;">
+            <span class="tag tag-accent" style="position: absolute; top: 12px; right: 12px; font-weight: 700;">
+              Tersedia
+            </span>
+          </div>
+          <div style="padding: 20px; display: flex; flex-direction: column; flex: 1; justify-content: space-between;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+                <h3 style="font-size: 20px; font-weight: 800; margin: 0; color: var(--color-neutral-900);">
+                  Kamar A-02
+                </h3>
+                <span class="small muted" style="font-weight: 600;">Lantai 1</span>
+              </div>
+              <div style="font-size: 18px; font-weight: 800; color: var(--color-neutral-900); margin-bottom: 12px;">
+                Rp 1.400.000
+                <span class="small muted" style="font-weight: 400; font-size: 13px;">/ bulan</span>
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;">
+                <span class="tag tag-outline" style="font-size: 11px; padding: 2px 8px;">Kasur Springbed</span>
+                <span class="tag tag-outline" style="font-size: 11px; padding: 2px 8px;">Lemari Baju</span>
+                <span class="tag tag-outline" style="font-size: 11px; padding: 2px 8px;">WiFi</span>
+              </div>
+            </div>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-divider);">
+              <a href="room-detail.html" class="btn btn-primary btn-block" style="justify-content: center; text-align: center;">
+                Lihat Detail & Sewa
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- KARTU KAMAR 3 -->
+        <div class="card elev-sm" style="overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--color-divider); border-radius: 8px;">
+          <div style="position: relative; height: 190px; background: var(--color-neutral-100); overflow: hidden;">
+            <img src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=600&q=80" alt="Foto Kamar B-01" style="width: 100%; height: 100%; object-fit: cover;">
+            <span class="tag tag-accent" style="position: absolute; top: 12px; right: 12px; font-weight: 700;">
+              Tersedia
+            </span>
+          </div>
+          <div style="padding: 20px; display: flex; flex-direction: column; flex: 1; justify-content: space-between;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+                <h3 style="font-size: 20px; font-weight: 800; margin: 0; color: var(--color-neutral-900);">
+                  Kamar B-01
+                </h3>
+                <span class="small muted" style="font-weight: 600;">Lantai 2</span>
+              </div>
+              <div style="font-size: 18px; font-weight: 800; color: var(--color-neutral-900); margin-bottom: 12px;">
+                Rp 1.700.000
+                <span class="small muted" style="font-weight: 400; font-size: 13px;">/ bulan</span>
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;">
+                <span class="tag tag-outline" style="font-size: 11px; padding: 2px 8px;">Balkon Pribadi</span>
+                <span class="tag tag-outline" style="font-size: 11px; padding: 2px 8px;">AC</span>
+                <span class="tag tag-outline" style="font-size: 11px; padding: 2px 8px;">Kamar Mandi Dalam</span>
+              </div>
+            </div>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-divider);">
+              <a href="room-detail.html" class="btn btn-primary btn-block" style="justify-content: center; text-align: center;">
+                Lihat Detail & Sewa
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Pagination Statis (Nanti digantikan $rooms->links() di Blade) -->
+      <div style="margin-top: 40px; display: flex; justify-content: center; gap: 8px;">
+        <button class="btn btn-secondary btn-sm" disabled>&larr; Sebelumnya</button>
+        <button class="btn btn-primary btn-sm">1</button>
+        <button class="btn btn-secondary btn-sm">2</button>
+        <button class="btn btn-secondary btn-sm">Selanjutnya &rarr;</button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ============================================================
+       3. FOOTER PUBLIK
+       ============================================================ -->
+  <footer class="site-foot" style="background: var(--color-neutral-900); color: #fff; padding: 40px 0; border-top: 1px solid var(--color-divider);">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+      <div class="brand" style="color: #fff;">
+        Kos<span class="brand-accent">Fly</span>
+      </div>
+      <p class="small" style="color: var(--color-neutral-400); margin: 0;">
+        &copy; 2026 KosFly. Manajemen Kos & Sewa Online Terpadu.
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

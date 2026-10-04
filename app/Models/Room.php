@@ -34,8 +34,19 @@ class Room extends Model
         return $this->hasMany(Lease::class);
     }
 
+    public function activeLease()
+    {
+        return $this->hasOne(Lease::class)->where('status', 'active')->latestOfMany();
+    }
+
     public function maintenanceRequests()
     {
         return $this->hasMany(MaintenanceRequest::class);
     }
+
+    public function getPricePerMonthAttribute()
+    {
+        return $this->price;
+    }
 }
+

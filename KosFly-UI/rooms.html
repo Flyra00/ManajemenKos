@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f2f2">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Kamar — KosFly Admin</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="rooms">
+
+<!-- ============================================================================
+     CATATAN PREVIEW (frontend-only)
+     Halaman ini adalah PREVIEW STATIS dari rooms/index.blade.php — tanpa dummy
+     data, tanpa CRUD JavaScript, tanpa localStorage. Versi resmi yang siap
+     dipindah ke Laravel ada di rooms/index.blade.php (Blade: @foreach($rooms),
+     route('rooms.*'), {{ $rooms->links() }}, @error, session flash, dsb).
+     ============================================================================ -->
+
+<div class="layout">
+
+  <!-- ============================================================
+       SIDEBAR — struktur statis. Saat integrasi Laravel, potong
+       blok ini menjadi components/sidebar.blade.php. Ganti href
+       dengan route Laravel.
+       ============================================================ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">Kos<span class="brand-accent">Fly</span></div>
+
+    <nav class="side-nav" aria-label="Menu utama KosFly">
+      <!-- data-role = daftar role yang boleh melihat menu ini (demo preview saja) -->
+      <a class="nav-btn" href="index.html" data-role="owner admin tenant">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7v9H3z"/><path d="M14 3h7v5h-7z"/><path d="M14 12h7v9h-7z"/><path d="M3 16h7v5H3z"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a class="nav-btn active" href="rooms.html" data-role="owner admin">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-8h6v8"/></svg>
+        <span>Kelola Kamar</span>
+      </a>
+      <a class="nav-btn" href="tenants.html" data-role="owner admin">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Penghuni</span>
+      </a>
+      <a class="nav-btn" href="leases.html" data-role="owner admin">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+        <span>Kontrak Sewa</span>
+      </a>
+      <a class="nav-btn" href="payments.html" data-role="owner admin">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7h20v12H2z"/><path d="M2 11h20"/><path d="M6 15h4"/></svg>
+        <span>Pembayaran</span>
+      </a>
+      <a class="nav-btn" href="maintenance.html" data-role="owner admin tenant">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>Maintenance</span>
+        <span class="nav-badge" id="navKeluhanBadge" hidden></span>
+      </a>
+      <a class="nav-btn" href="expenses.html" data-role="owner admin">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg>
+        <span>Pengeluaran</span>
+      </a>
+      <a class="nav-btn" href="reports.html" data-role="owner admin">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/></svg>
+        <span>Laporan</span>
+      </a>
+      <a class="nav-btn" href="facilities.html" data-role="owner admin">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><path d="M12 20h.01"/></svg>
+        <span>Fasilitas</span>
+      </a>
+      <a class="nav-btn" href="settings.html" data-role="owner admin">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Pengaturan</span>
+      </a>
+    </nav>
+
+    <div class="side-foot" id="sideFoot">KosFly Admin v2.0</div>
+  </aside>
+
+  <!-- ============================ KONTEN ============================ -->
+  <div class="main">
+
+    <!-- ============================ TOPBAR ============================ -->
+    <header class="topbar">
+      <button class="btn btn-icon btn-secondary hamburger" id="hamburger" data-action="toggle-nav" title="Menu" aria-label="Buka menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg>
+      </button>
+
+      <div class="searchbox">
+        <svg class="search-ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input id="globalSearch" class="input" type="search" name="globalSearch" placeholder="Cari kamar, penghuni, pembayaran…" autocomplete="off" aria-label="Cari">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="notif">
+          <button class="btn btn-icon btn-secondary" id="notifBtn" data-action="toggle-notif" title="Notifikasi" aria-label="Notifikasi">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          </button>
+          <span class="notif-dot" id="notifDot" hidden></span>
+          <div class="notif-menu" id="notifMenu"></div>
+        </div>
+
+        <div class="userchip" id="userChip" data-action="toggle-user">
+          <div class="avatar" id="userAvatar">AK</div>
+          <div class="user-meta">
+            <b id="userName">Admin KosFly</b>
+            <span id="userRole">Admin</span>
+          </div>
+          <span class="user-caret">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </span>
+          <div class="user-menu" id="userMenu">
+            <a href="profile.html">Profil</a>
+            <a href="settings.html">Pengaturan</a>
+            <button data-action="logout">Keluar</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============================ KONTEN HALAMAN ============================ -->
+    <main class="page">
+
+      <section class="page-head" aria-label="Judul halaman">
+        <div>
+          <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a href="index.html">Dashboard</a>
+            <span class="sep">/</span>
+            <span class="current">Master Kamar</span>
+          </nav>
+          <h2 class="page-title">Kelola Kamar</h2>
+          <p class="page-sub">Kelola data kamar kos, harga, status, fasilitas, dan foto kamar.</p>
+        </div>
+        <div class="flex head-actions">
+          <!-- Blade: <a href="{{ route('rooms.create') }}" class="btn btn-primary"> -->
+          <a href="rooms/create.blade.php" class="btn btn-primary" title="Di Laravel: route('rooms.create')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            Tambah Kamar
+          </a>
+        </div>
+      </section>
+
+      <!-- Blade: @if(session('success')) … @endif — area flash message Laravel.
+           Ditampilkan otomatis saat backend mengirim session success/error. -->
+      <div class="alert alert-success" role="status" hidden>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <span>Kamar berhasil ditambahkan. <small>(contoh tampilan session('success'))</small></span>
+      </div>
+
+      <!-- Kartu statistik — nilai diisi backend ({{ $rooms->count() }} dll.).
+           Preview statis: 0. Tidak ada angka hard-coded dari dummy data. -->
+      <section class="grid-4" aria-label="Statistik kamar">
+        <div class="card elev-sm stat-card" style="border-top:2px solid var(--color-neutral-900)">
+          <div class="stat-label">Total Kamar</div>
+          <div class="stat-value">0</div>
+          <div class="stat-sub muted">— lantai</div>
+        </div>
+        <div class="card elev-sm stat-card" style="border-top:2px solid var(--color-neutral-300)">
+          <div class="stat-label">Kamar Kosong</div>
+          <div class="stat-value">0</div>
+          <div class="stat-sub muted">tersedia untuk disewa</div>
+        </div>
+        <div class="card elev-sm stat-card" style="border-top:2px solid var(--color-neutral-900)">
+          <div class="stat-label">Kamar Terisi</div>
+          <div class="stat-value">0</div>
+          <div class="stat-sub muted">sedang dihuni</div>
+        </div>
+        <div class="card elev-sm stat-card" style="border-top:2px solid var(--color-accent)">
+          <div class="stat-label">Perbaikan</div>
+          <div class="stat-value">0</div>
+          <div class="stat-sub muted">sedang dalam perbaikan</div>
+        </div>
+      </section>
+
+      <!-- Filter + tabel kamar -->
+      <section class="card elev-sm section-card" aria-label="Daftar kamar">
+        <div class="card-head">
+          <h3 class="card-title">Daftar Kamar</h3>
+          <span class="small muted">0 kamar terdaftar</span>
+        </div>
+
+        <!-- Blade: form GET action="{{ route('rooms.index') }}" — search/filter
+             diproses server-side oleh Laravel. -->
+        <form method="GET" action="rooms/index.blade.php" class="filter-bar" role="search">
+          <input class="input" type="search" name="search" placeholder="Cari nomor kamar…" aria-label="Cari nomor kamar">
+          <select class="input" name="floor" aria-label="Filter lantai">
+            <option value="">Semua Lantai</option>
+            <option value="1">Lantai 1</option>
+            <option value="2">Lantai 2</option>
+            <option value="3">Lantai 3</option>
+          </select>
+          <select class="input" name="status" aria-label="Filter status">
+            <option value="">Semua Status</option>
+            <option value="Kosong">Kosong</option>
+            <option value="Terisi">Terisi</option>
+            <option value="Perbaikan">Perbaikan</option>
+          </select>
+          <select class="input" name="is_active" aria-label="Filter status aktif">
+            <option value="">Semua</option>
+            <option value="1">Aktif</option>
+            <option value="0">Nonaktif</option>
+          </select>
+          <button type="submit" class="btn btn-secondary">Terapkan</button>
+        </form>
+
+        <div class="table-wrap">
+          <table class="table table-wide">
+            <thead>
+              <tr>
+                <th>Foto</th>
+                <th>No. Kamar</th>
+                <th>Lantai</th>
+                <th>Harga / Bulan</th>
+                <th>Status</th>
+                <th>Aktif</th>
+                <th>Fasilitas</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Blade: @forelse($rooms as $room) … @empty -->
+              <tr>
+                <td colspan="8">
+                  <div class="empty-state">
+                    <span class="es-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-8h6v8"/></svg>
+                    </span>
+                    <h4>Belum ada kamar</h4>
+                    <p>Belum ada data kamar yang tersedia.</p>
+                    <a href="rooms/create.blade.php" class="btn btn-primary">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                      Tambah kamar pertama
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Blade: {{ $rooms->links() }} — pagination Laravel (bukan dummy JS).
+             Tidak ada pagination dummy di preview ini. -->
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- Backdrop navigasi mobile -->
+<div class="nav-backdrop" id="navBackdrop"></div>
+
+<!-- ============================================================
+     MODAL KONFIRMASI HAPUS — struktur siap dipindah ke Blade.
+     Form dikirim ke rooms.destroy via route('rooms.destroy', $room).
+     ============================================================ -->
+<div class="dialog-backdrop" id="modalConfirm" hidden data-close="1">
+  <div class="dialog">
+    <div class="dialog-title">Hapus Kamar?</div>
+    <p class="small muted" style="margin:0;line-height:1.6">
+      Apakah Anda yakin ingin menghapus kamar <b id="delRoomName">—</b>?
+      Tindakan ini tidak dapat dibatalkan.
+    </p>
+    <form method="POST" id="formDelete" action="">
+      <!-- Blade: @csrf + @method('DELETE') -->
+      <div class="dialog-actions" style="margin-top:16px">
+        <button type="button" class="btn btn-secondary" data-action="close-dialog">Batal</button>
+        <button type="submit" class="btn btn-primary">Hapus</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast notifications -->
+<div id="toastRoot" aria-live="polite"></div>
+
+<script src="app.js"></script>
+<script>
+  // UI kecil preview ini saja: buka/tutup modal konfirmasi hapus.
+  // (Di Blade, script yang sama ada di rooms/index.blade.php.)
+  (function () {
+    var modal = document.getElementById('modalConfirm');
+    if (!modal) return;
+    var form = document.getElementById('formDelete');
+    var nameEl = document.getElementById('delRoomName');
+
+    function open(el) {
+      if (form) form.action = el.getAttribute('data-url') || '';
+      if (nameEl) nameEl.textContent = el.getAttribute('data-name') || '—';
+      modal.hidden = false;
+    }
+    function close() { modal.hidden = true; }
+
+    document.addEventListener('click', function (e) {
+      var opener = e.target.closest && e.target.closest('[data-action="room-delete-open"]');
+      if (opener) { open(opener); return; }
+      if (e.target.closest && e.target.closest('[data-action="close-dialog"]')) { close(); return; }
+      if (e.target.getAttribute && e.target.getAttribute('data-close') === '1') close();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !modal.hidden) close();
+    });
+  })();
+</script>
+</body>
+</html>

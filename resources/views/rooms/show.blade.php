@@ -14,12 +14,22 @@
           <h2 class="page-title">Detail Kamar {{ $room->room_number }}</h2>
           <p class="page-sub">Informasi lengkap kamar kos, status, fasilitas, dan foto.</p>
         </div>
-        <div class="flex head-actions">
-          <a href="{{ route('rooms.edit', $room) }}" class="btn btn-primary">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
-            Edit
-          </a>
+        <div class="flex head-actions" style="gap: 8px;">
+          <a href="{{ route('rooms.index') }}" class="btn btn-secondary">Kembali</a>
+          @if(!auth()->user() || !auth()->user()->hasRole('owner'))
+            @if($room->status === 'available')
+              <a href="{{ route('leases.create', ['room_id' => $room->id]) }}" class="btn btn-secondary" title="Buat Kontrak Sewa untuk Kamar Ini">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg>
+                Buat Kontrak Sewa
+              </a>
+            @endif
+            <a href="{{ route('rooms.edit', $room) }}" class="btn btn-primary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
+              Edit
+            </a>
+          @endif
         </div>
+
       </section>
 
       <!-- Hero: foto + informasi utama -->
@@ -47,7 +57,14 @@
             <div class="info-item">
               <span class="info-label">Status</span>
               <span class="info-value">
-                <span class="tag {{ $room->status === 'Terisi' ? 'tag-neutral' : ($room->status === 'Perbaikan' ? 'tag-accent' : 'tag-outline') }}">{{ $room->status }}</span>
+                @if($room->status === 'available')
+                  <span class="tag tag-outline">Kosong (Tersedia)</span>
+                @elseif($room->status === 'occupied')
+                  <span class="tag tag-accent">Terisi</span>
+                @else
+                  <span class="tag tag-neutral">Perbaikan</span>
+                @endif
+
               </span>
             </div>
             <div class="info-item">
