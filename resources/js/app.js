@@ -329,10 +329,97 @@ document.addEventListener('keydown', (e) => {
   closeAllMenus();
 });
 
+/* --------------------------- PASSWORD TOGGLE --------------------------- */
+function initPasswordToggles() {
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-toggle-pw]');
+    if (!btn) return;
+
+    const targetId = btn.getAttribute('data-toggle-pw');
+    const input = document.getElementById(targetId);
+    if (!input) return;
+
+    const isPw = input.type === 'password';
+    input.type = isPw ? 'text' : 'password';
+    btn.setAttribute('aria-pressed', isPw ? 'true' : 'false');
+    btn.setAttribute('aria-label', isPw ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
+
+    const icOn = btn.querySelector('.ic-on');
+    const icOff = btn.querySelector('.ic-off');
+    if (icOn && icOff) {
+      icOn.style.display = isPw ? 'inline-block' : 'none';
+      icOff.style.display = isPw ? 'none' : 'inline-block';
+    }
+  });
+}
+
+/* --------------------------- STRENGTH METER --------------------------- */
+function initStrengthMeter() {
+  const input = document.getElementById('regPassword');
+  const bar = document.getElementById('strengthBar');
+  const label = document.getElementById('strengthLabel');
+  if (!input || !bar || !label) return;
+
+  const colors = {
+    1: 'var(--color-error, #e11d48)',
+    2: 'var(--color-warning, #f59e0b)',
+    3: 'var(--color-success, #22c55e)',
+    4: 'var(--color-success, #22c55e)',
+  };
+
+  function evaluate() {
+    const val = input.value || '';
+    if (!val) {
+      label.textContent = 'Kekuatan password: —';
+      label.className = 'strength-label';
+      for (let i = 0; i < 4; i++) {
+        if (bar.children[i]) bar.children[i].style.backgroundColor = '';
+      }
+      return;
+    }
+
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (val.length >= 12) score++;
+    if (/[a-z]/.test(val) && /[A-Z]/.test(val)) score++;
+    if (/\d/.test(val)) score++;
+    if (/[^a-zA-Z0-9]/.test(val)) score++;
+
+    let text = 'Lemah';
+    let cls = 's1';
+    let seg = 1;
+    if (score >= 5) {
+      text = 'Sangat Kuat';
+      cls = 's4';
+      seg = 4;
+    } else if (score >= 4) {
+      text = 'Kuat';
+      cls = 's3';
+      seg = 3;
+    } else if (score === 3) {
+      text = 'Cukup';
+      cls = 's2';
+      seg = 2;
+    }
+
+    label.textContent = 'Kekuatan password: ' + text;
+    label.className = 'strength-label ' + cls;
+    for (let i = 0; i < 4; i++) {
+      const segEl = bar.children[i];
+      if (segEl) segEl.style.backgroundColor = i < seg ? colors[seg] : '';
+    }
+  }
+
+  input.addEventListener('input', evaluate);
+  if (input.value) evaluate();
+}
+
 /* ------------------------------- INIT ------------------------------- */
 function init() {
   initSidebar();
   initServerToasts();
+  initPasswordToggles();
+  initStrengthMeter();
 }
 
 if (document.readyState === 'loading') {
@@ -340,3 +427,4 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+

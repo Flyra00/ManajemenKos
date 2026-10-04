@@ -14,6 +14,7 @@ class SendResendTestEmail extends Command
      */
     protected $signature = 'resend:test 
                             {--to=xiktronz@gmail.com : Recipient email address}
+                            {--from= : Optional sender email address (default: onboarding@resend.dev)}
                             {--key= : Optional Resend API key to override .env}
                             {--type=forgot-password : Email type (greeting or forgot-password)}';
 
@@ -42,16 +43,34 @@ class SendResendTestEmail extends Command
             return Command::FAILURE;
         }
 
-        $this->info("Sending test email [{$type}] to: {$to} using Resend API...");
+        $fromOpt = $this->option('from') ?: config('mail.from.address', 'onboarding@resend.dev');
+        if (empty($fromOpt) || $fromOpt === 'hello@example.com') {
+            $fromOpt = 'onboarding@resend.dev';
+        }
+        $fromName = config('mail.from.name', 'KosFly');
+        $from = str_contains($fromOpt, '<') ? $fromOpt : "{$fromName} <{$fromOpt}>";
+
+        $this->info("Sending test email [{$type}] to: {$to} (from: {$from}) using Resend API...");
 
         try {
             $resend = Resend::client($apiKey);
 
             if ($type === 'forgot-password') {
-                $fakeResetUrl = url('/reset-password/sample-test-token-12345?email=' . urlencode($to));
+                $user = \App\Models\User::where('email', $to)->first();
+                if ($user) {
+                    $token = \Illuminate\Support\Facades\Password::createToken($user);
+                    $resetUrl = url(route('password.reset', ['token' => $token, 'email' => $to], false));
+                    $userName = $user->name;
+                    $this->info("Generated genuine password reset token for registered user: {$user->email}");
+                } else {
+                    $resetUrl = url(route('password.reset', ['token' => 'sample-test-token-12345', 'email' => $to], false));
+                    $userName = 'Pengguna KosFly';
+                    $this->warn("User {$to} not found in database. Using mock reset token.");
+                }
+
                 $html = view('emails.forgot-password', [
-                    'userName' => 'Pengguna KosFly',
-                    'resetUrl' => $fakeResetUrl,
+                    'userName' => $userName,
+                    'resetUrl' => $resetUrl,
                 ])->render();
                 $subject = 'Atur Ulang Kata Sandi Akun KosFly';
             } else {
@@ -60,7 +79,7 @@ class SendResendTestEmail extends Command
             }
 
             $response = $resend->emails->send([
-                'from'    => 'onboarding@resend.dev',
+                'from'    => $from,
                 'to'      => $to,
                 'subject' => $subject,
                 'html'    => $html,
@@ -74,6 +93,9 @@ class SendResendTestEmail extends Command
             return Command::SUCCESS;
         } catch (\Exception $e) {
             $this->error("Failed to send email: " . $e->getMessage());
+            if (str_contains(strtolower($e->getMessage()), 'domain') || str_contains(strtolower($e->getMessage()), 'verify') || str_contains(strtolower($e->getMessage()), 'validation')) {
+                $this->warn("\nCatatan: Pengirim selain onboarding@resend.dev mengharuskan domain Anda sudah diverifikasi di Resend Dashboard (Domains -> Add Domain).");
+            }
             return Command::FAILURE;
         }
     }

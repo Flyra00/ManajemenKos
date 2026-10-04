@@ -14,6 +14,10 @@ class RegistrationTest extends TestCase
         $response = $this->get('/register');
 
         $response->assertStatus(200);
+        $response->assertSee('data-toggle-pw="regPassword"', false);
+        $response->assertSee('data-toggle-pw="regConfirm"', false);
+        $response->assertSee('id="strengthBar"', false);
+        $response->assertSee('resources/js/app.js', false);
     }
 
     public function test_new_users_can_register(): void

@@ -70,4 +70,14 @@ class PasswordResetTest extends TestCase
             return true;
         });
     }
+
+    public function test_reset_password_screen_has_toggle_password_and_assets(): void
+    {
+        $response = $this->get('/reset-password/sample-token?email=test@example.com');
+
+        $response->assertStatus(200);
+        $response->assertSee('data-toggle-pw="password"', false);
+        $response->assertSee('data-toggle-pw="password_confirmation"', false);
+        $response->assertSee('resources/js/app.js', false);
+    }
 }
