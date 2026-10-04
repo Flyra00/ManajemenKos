@@ -140,6 +140,13 @@
                 Rp {{ number_format($activeLease->monthly_price, 0, ',', '.') }}
                 <span class="small muted" style="font-weight: 400; font-size: 12px;">/ bulan</span>
               </div>
+            @else
+              <div style="margin-top: 10px;">
+                <a href="{{ route('public.rooms.index') }}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700; padding: 8px 18px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-8h6v8"/></svg>
+                  <span>Pilih Kamar Dari Katalog &rarr;</span>
+                </a>
+              </div>
             @endif
           </div>
         </div>
@@ -158,6 +165,83 @@
         </div>
       @endif
     </div>
+
+    <!-- ============================================================
+         KATALOG PILIHAN KAMAR SIAP HUNI (JIKA BELUM ADA KAMAR AKTIF)
+         ============================================================ -->
+    @if(!$activeLease && isset($availableRooms) && $availableRooms->isNotEmpty())
+      <div class="card elev-sm" style="margin-bottom: 24px; padding: 24px; border: 1px solid var(--color-divider); background: #ffffff; border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+          <div>
+            <h3 style="font-size: 18px; font-weight: 800; margin: 0; color: var(--color-neutral-900);">
+              Pilih Kamar Kos Siap Huni
+            </h3>
+            <p class="small muted" style="margin: 4px 0 0;">
+              Tersedia {{ $availableRooms->count() }} kamar kosong. Pilih kamar favorit Anda dan ajukan sewa secara mandiri.
+            </p>
+          </div>
+          <a href="{{ route('public.rooms.index') }}" class="btn btn-secondary btn-sm" style="font-weight: 600;">
+            Lihat Semua Kamar (Katalog Lengkap) &rarr;
+          </a>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px;">
+          @foreach($availableRooms as $availRoom)
+            <div class="card elev-sm" style="border: 1px solid var(--color-divider); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; background: #ffffff;">
+              <div style="height: 160px; background: var(--color-neutral-100); position: relative; overflow: hidden;">
+                @if($availRoom->image)
+                  <img src="{{ asset('storage/' . $availRoom->image) }}" alt="Kamar {{ $availRoom->room_number }}" style="width: 100%; height: 100%; object-fit: cover;">
+                @else
+                  <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--color-neutral-400);">
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-8h6v8"/></svg>
+                  </div>
+                @endif
+                <span class="tag tag-accent" style="position: absolute; top: 10px; right: 10px; font-size: 11px; font-weight: 700; background: #22c55e; color: #fff;">
+                  Tersedia
+                </span>
+                <span class="tag tag-neutral" style="position: absolute; top: 10px; left: 10px; font-size: 11px; font-weight: 600; background: rgba(0,0,0,0.65); color: #fff;">
+                  Lantai {{ $availRoom->floor }}
+                </span>
+              </div>
+
+              <div style="padding: 16px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <h4 style="font-size: 18px; font-weight: 800; margin: 0 0 8px; color: var(--color-neutral-900);">
+                    Kamar {{ $availRoom->room_number }}
+                  </h4>
+
+                  @if($availRoom->facilities->isNotEmpty())
+                    <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 14px;">
+                      @foreach($availRoom->facilities->take(3) as $fac)
+                        <span style="font-size: 11px; padding: 2px 7px; background: var(--color-neutral-100); border-radius: 4px; color: var(--color-neutral-700); border: 1px solid var(--color-divider);">
+                          ✓ {{ $fac->name }}
+                        </span>
+                      @endforeach
+                      @if($availRoom->facilities->count() > 3)
+                        <span style="font-size: 11px; padding: 2px 6px; color: var(--color-neutral-500);">
+                          +{{ $availRoom->facilities->count() - 3 }}
+                        </span>
+                      @endif
+                    </div>
+                  @endif
+                </div>
+
+                <div>
+                  <div style="font-size: 17px; font-weight: 800; color: var(--color-primary); margin-bottom: 12px;">
+                    Rp {{ number_format($availRoom->price, 0, ',', '.') }}
+                    <span style="font-size: 12px; font-weight: 400; color: var(--color-text-muted);">/ bulan</span>
+                  </div>
+
+                  <a href="{{ route('public.rooms.show', $availRoom) }}" class="btn btn-primary btn-block" style="justify-content: center; font-weight: 700;">
+                    Pilih &amp; Sewa Kamar Ini &rarr;
+                  </a>
+                </div>
+              </div>
+            </div>
+          @endforeach
+        </div>
+      </div>
+    @endif
 
     <!-- ============================================================
          2. DUA KOLOM LAPANG (TAGIHAN & KELUHAN)

@@ -195,6 +195,18 @@ class DashboardController extends Controller
         // Pengaturan Kos (Rekening Bank & WhatsApp Pengelola)
         $kosSettings = KosSetting::settings();
 
+        // Daftar Kamar Tersedia (Untuk Penyewa yang belum memiliki kamar aktif)
+        $availableRooms = collect();
+        if (!$activeLease) {
+            $availableRooms = Room::with('facilities')
+                ->where('is_active', true)
+                ->where('status', 'available')
+                ->orderBy('floor')
+                ->orderBy('room_number')
+                ->take(6)
+                ->get();
+        }
+
         return view('dashboard-tenant', compact(
             'user',
             'tenant',
@@ -205,7 +217,8 @@ class DashboardController extends Controller
             'unpaidPayments',
             'recentPayments',
             'maintenanceRequests',
-            'kosSettings'
+            'kosSettings',
+            'availableRooms'
         ));
     }
 }
