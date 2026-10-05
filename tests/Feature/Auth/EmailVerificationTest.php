@@ -55,4 +55,35 @@ class EmailVerificationTest extends TestCase
 
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
     }
+
+    public function test_unverified_user_cannot_access_dashboard(): void
+    {
+        $user = User::factory()->unverified()->create();
+
+        $response = $this->actingAs($user)->get('/dashboard');
+
+        $response->assertRedirect('/verify-email');
+    }
+
+    public function test_registration_sends_verification_notification(): void
+    {
+        \Illuminate\Support\Facades\Notification::fake();
+
+        $this->post('/register', [
+            'name'                  => 'Verify User',
+            'email'                 => 'verify@example.com',
+            'phone'                 => '081299998888',
+            'password'              => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $user = User::where('email', 'verify@example.com')->first();
+        $this->assertNotNull($user);
+        $this->assertFalse($user->hasVerifiedEmail());
+
+        \Illuminate\Support\Facades\Notification::assertSentTo(
+            $user,
+            \Illuminate\Auth\Notifications\VerifyEmail::class
+        );
+    }
 }

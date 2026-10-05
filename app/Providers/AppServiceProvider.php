@@ -32,5 +32,14 @@ class AppServiceProvider extends ServiceProvider
                     'resetUrl' => $resetUrl,
                 ]);
         });
+
+        \Illuminate\Auth\Notifications\VerifyEmail::toMailUsing(function (object $notifiable, string $url) {
+            return (new \Illuminate\Notifications\Messages\MailMessage)
+                ->subject('Verifikasi Alamat Email Anda — KosFly')
+                ->view('emails.verify-email', [
+                    'userName' => $notifiable->name ?? 'Pengguna',
+                    'verifyUrl' => $url,
+                ]);
+        });
     }
 }

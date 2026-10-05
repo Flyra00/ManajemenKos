@@ -288,7 +288,7 @@
                     class="strength-label"
                     id="strengthLabel"
                 >
-                    Kekuatan password: Lemah
+                    Kekuatan password: —
                 </p>
 
 

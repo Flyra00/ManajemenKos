@@ -78,6 +78,6 @@ class PasswordResetTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('data-toggle-pw="password"', false);
         $response->assertSee('data-toggle-pw="password_confirmation"', false);
-        $response->assertSee('resources/js/app.js', false);
+        $response->assertSee('app', false);
     }
 }

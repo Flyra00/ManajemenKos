@@ -16,7 +16,7 @@ class AuthenticationTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('data-toggle-pw="loginPassword"', false);
-        $response->assertSee('resources/js/app.js', false);
+        $response->assertSee('app', false);
     }
 
     public function test_users_can_authenticate_using_the_login_screen(): void

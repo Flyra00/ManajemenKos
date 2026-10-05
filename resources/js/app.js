@@ -378,28 +378,27 @@ function initStrengthMeter() {
       return;
     }
 
-    let score = 0;
-    if (val.length >= 8) score++;
-    if (val.length >= 12) score++;
-    if (/[a-z]/.test(val) && /[A-Z]/.test(val)) score++;
-    if (/\d/.test(val)) score++;
-    if (/[^a-zA-Z0-9]/.test(val)) score++;
-
-    let text = 'Lemah';
+    let text = 'Kurang (min. 8 karakter)';
     let cls = 's1';
     let seg = 1;
-    if (score >= 5) {
-      text = 'Sangat Kuat';
-      cls = 's4';
-      seg = 4;
-    } else if (score >= 4) {
-      text = 'Kuat';
-      cls = 's3';
-      seg = 3;
-    } else if (score === 3) {
-      text = 'Cukup';
-      cls = 's2';
-      seg = 2;
+
+    if (val.length >= 8) {
+      const hasLetters = /[a-zA-Z]/.test(val);
+      const hasNumbers = /\d/.test(val);
+
+      if (val.length >= 10 && hasLetters && hasNumbers) {
+        text = 'Sangat Kuat';
+        cls = 's4';
+        seg = 4;
+      } else if (hasLetters && hasNumbers) {
+        text = 'Kuat';
+        cls = 's3';
+        seg = 3;
+      } else {
+        text = 'Cukup';
+        cls = 's2';
+        seg = 2;
+      }
     }
 
     label.textContent = 'Kekuatan password: ' + text;
