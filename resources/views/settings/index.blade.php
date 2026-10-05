@@ -227,85 +227,18 @@
 
       </section>
 
-      <!-- 3. MANAJEMEN PENGGUNA & PERAN (SPATIE PERMISSION) -->
-      <section class="card elev-sm section-card" aria-label="Manajemen pengguna dan peran">
-        <div class="card-head">
-          <h3 class="card-title">Manajemen Akun Pengguna & Hak Akses (Role)</h3>
-          <span class="small muted">{{ $users->total() }} akun terdaftar</span>
+      <!-- 3. MANAJEMEN PENGGUNA (MENU SIDEBAR) -->
+      <section class="card elev-sm section-card" aria-label="Manajemen pengguna" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+        <div>
+          <h3 class="card-title" style="margin-bottom:4px;">Manajemen Akun Pengguna &amp; Hak Akses</h3>
+          <p class="small muted" style="margin:0;">Kelola akun terdaftar, status verifikasi, dan peran pengguna kini berada di menu utama Sidebar.</p>
         </div>
-
-        <div class="table-wrap">
-          <table class="table table-wide">
-            <thead>
-              <tr>
-                <th style="width:60px;">No</th>
-                <th>Nama Pengguna</th>
-                <th>Email</th>
-                <th>Nomor Telepon</th>
-                <th>Peran Saat Ini</th>
-                @if(!auth()->user() || !auth()->user()->hasRole('owner'))
-                  <th style="width:240px;">Ubah Peran (Spatie)</th>
-                @endif
-              </tr>
-            </thead>
-            <tbody>
-              @forelse($users as $u)
-                @php
-                  $currentRole = $u->roles->first()?->name ?? 'tenant';
-                @endphp
-                <tr>
-                  <td class="muted">{{ $users->firstItem() ? $users->firstItem() + $loop->index : $loop->iteration }}</td>
-                  <td class="font-semibold">{{ $u->name }}</td>
-                  <td>{{ $u->email }}</td>
-                  <td>{{ $u->phone ?: '—' }}</td>
-                  <td>
-                    @if($currentRole === 'admin')
-                      <span class="tag tag-accent">Admin</span>
-                    @elseif($currentRole === 'owner')
-                      <span class="tag tag-outline" style="border-color:var(--color-neutral-900); font-weight:700">Owner</span>
-                    @else
-                      <span class="tag tag-outline">Tenant</span>
-                    @endif
-                  </td>
-                  @if(!auth()->user() || !auth()->user()->hasRole('owner'))
-                    <td>
-                      <form method="POST" action="{{ route('settings.users.role', $u) }}" class="flex items-center" style="gap:6px">
-                        @csrf
-                        @method('PUT')
-                        <select class="input py-1 text-xs" name="role" style="min-width:110px">
-                          <option value="admin" @selected($currentRole === 'admin')>Admin</option>
-                          <option value="owner" @selected($currentRole === 'owner')>Owner</option>
-                          <option value="tenant" @selected($currentRole === 'tenant')>Tenant</option>
-                        </select>
-                        <button type="submit" class="btn btn-secondary btn-sm" title="Terapkan peran baru">
-                          Ubah
-                        </button>
-                      </form>
-                    </td>
-                  @endif
-                </tr>
-              @empty
-
-                <tr>
-                  <td colspan="6" class="text-center py-6 text-neutral-500">
-                    Belum ada data akun pengguna.
-                  </td>
-                </tr>
-              @endforelse
-            </tbody>
-          </table>
+        <div>
+          <a href="{{ route('users.index') }}" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Buka Menu Pengguna &rarr;
+          </a>
         </div>
-
-        @if($users->hasPages())
-          <div class="card-footer flex justify-between items-center py-3 px-4 border-t border-neutral-200">
-            <span class="text-sm text-neutral-600">
-              Menampilkan {{ $users->firstItem() }} - {{ $users->lastItem() }} dari {{ $users->total() }} akun
-            </span>
-            <div>
-              {{ $users->links() }}
-            </div>
-          </div>
-        @endif
       </section>
 
     </main>

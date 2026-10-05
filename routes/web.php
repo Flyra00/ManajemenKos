@@ -12,6 +12,7 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\PublicRoomController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\InvoiceController;
@@ -90,7 +91,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/settings/profile', [SettingController::class, 'updateProfile'])->name('settings.profile');
         Route::put('/settings/password', [SettingController::class, 'updatePassword'])->name('settings.password');
         Route::put('/settings/kos', [SettingController::class, 'updateKosInfo'])->name('settings.kos');
-        Route::put('/settings/users/{user}/role', [SettingController::class, 'updateUserRole'])->name('settings.users.role');
+        Route::put('/users/{user}/role', [UserController::class, 'updateRole'])->name('users.role');
+        Route::put('/settings/users/{user}/role', [UserController::class, 'updateRole'])->name('settings.users.role');
     });
 
     // Rute Monitoring Keuangan & Operasional (Dapat diakses oleh Admin, Owner, dan Staff)
@@ -107,6 +109,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('facilities', FacilityController::class)->only(['index', 'show']);
         Route::resource('tenants', TenantController::class)->only(['index', 'show']);
         Route::resource('leases', LeaseController::class)->only(['index', 'show']);
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
     });
 });
