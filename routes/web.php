@@ -64,9 +64,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/leases/{lease}/checkout-receipt', [LeaseController::class, 'checkoutReceipt'])->name('leases.checkout-receipt');
     Route::post('/leases/{lease}/request-bill', [LeaseController::class, 'requestBill'])->name('tenant.leases.request-bill');
 
-    // Modul Maintenance: View untuk semua, Edit/Hapus/Update Status khusus Admin & Staff
-    Route::resource('maintenance', MaintenanceController::class)->only(['index', 'show', 'create', 'store']);
-    Route::resource('maintenance', MaintenanceController::class)->only(['edit', 'update', 'destroy'])->middleware('role:admin|staff');
+    // Modul Maintenance: Akses CRUD (scoping otorisasi dikendalikan di MaintenanceController)
+    Route::resource('maintenance', MaintenanceController::class);
     Route::put('/maintenance/{maintenance}/status', [MaintenanceController::class, 'updateStatus'])
         ->middleware('role:admin|staff')
         ->name('maintenance.update-status');

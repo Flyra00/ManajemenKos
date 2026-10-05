@@ -10,6 +10,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
@@ -21,8 +22,10 @@ class BookingController extends Controller
      */
     public function store(Request $request, Room $room)
     {
-        // 1. Validasi ketersediaan kamar
-        if (! $room->is_active || $room->status !== 'available') {
+        // 1. Validasi ketersediaan kamar.
+        //    Ini cek awal (ramah pengguna) supaya akun tidak dibuat saat kamar sudah dipegang
+        //    kontrak/booking lain. Pengecekan atomik diulang di dalam transaction saat membuat kontrak.
+        if (! $room->is_active || $room->status !== 'available' || $room->hasBlockingLease()) {
             return back()->with('error', 'Maaf, kamar ini baru saja dipesan atau tidak sedang tersedia.');
         }
 
@@ -135,54 +138,88 @@ class BookingController extends Controller
             ]);
         }
 
-        // 5. Buat Kontrak Sewa (Lease) berstatus pending dengan masa aktif awal 60 hari (2 bulan)
+        // 5 & 6. Kunci kamar lalu terbitkan Kontrak (Lease) + Invoice secara atomik.
+        //
+        // Lock baris kamar (lockForUpdate) mencegah dua calon penyewa membuat
+        // kontrak untuk kamar yang sama pada saat yang bersamaan (double-booking).
         $startDate = Carbon::parse($validated['start_date']);
-        $endDate = (clone $startDate)->addDays(60);
 
-        // Tagihan invoice awal tetap senilai 1 bulan sewa
-        $totalRent = $room->price;
-        $isDeposit = ($validated['payment_type'] ?? 'full') === 'deposit_50';
-        $depositAmount = $isDeposit ? round($totalRent * 0.5) : 0;
-        $initialInvoiceAmount = $isDeposit ? $depositAmount : $totalRent;
+        $payment = DB::transaction(function () use ($room, $tenant, $validated, $startDate) {
+            $lockedRoom = Room::whereKey($room->id)->lockForUpdate()->first();
 
-        $lease = Lease::create([
-            'tenant_id'      => $tenant->id,
-            'room_id'        => $room->id,
-            'start_date'     => $startDate->toDateString(),
-            'end_date'       => $endDate->toDateString(),
-            'monthly_price'  => $room->price,
-            'deposit_amount' => $depositAmount,
-            'status'         => 'pending',
-            'note'           => "Masa aktif sewa awal 60 hari (2 bulan). " . ($isDeposit
-                ? "Tagihan Uang Muka (Deposit 50%) Rp " . number_format($depositAmount, 0, ',', '.') . ". Sisa pelunasan Rp " . number_format($totalRent - $depositAmount, 0, ',', '.') . "."
-                : "Tagihan sewa 1 bulan."),
-        ]);
+            if (! $lockedRoom || ! $lockedRoom->is_active || $lockedRoom->status !== 'available') {
+                return null;
+            }
 
-        // 6. Terbitkan Invoice Resmi (Payment) dengan tenggat 1x24 jam
-        $baseNumber = 'INV-' . now()->format('Ym') . '-';
-        $counter = Payment::count() + 1;
-        $invoiceNumber = $baseNumber . str_pad($counter, 4, '0', STR_PAD_LEFT);
+            // Bebaskan booking kedaluwarsa: kontrak pending yang seluruh invoicenya
+            // sudah lewat jatuh tempo dan tidak ada yang berstatus dibayar/menunggu bayar.
+            $lockedRoom->leases()
+                ->where('status', 'pending')
+                ->whereDoesntHave('payments', fn ($p) => $p->whereIn('status', ['paid', 'pending']))
+                ->whereHas('payments', fn ($p) => $p->whereIn('status', ['unpaid', 'overdue'])
+                    ->whereDate('due_date', '<', now()->toDateString()))
+                ->update(['status' => 'cancelled']);
 
-        while (Payment::where('invoice_number', $invoiceNumber)->exists()) {
-            $counter++;
+            // Cegah double-booking: kamar yang dipegang kontrak aktif / booking menunggu bayar.
+            if ($lockedRoom->hasBlockingLease()) {
+                return null;
+            }
+
+            // Hitung durasi dan masa aktif sewa berdasarkan pilihan durasi bulan
+            $durationMonths = (int) ($validated['duration_months'] ?? 1);
+            if ($durationMonths < 1) {
+                $durationMonths = 1;
+            }
+            $endDate = (clone $startDate)->addMonths($durationMonths);
+            $totalRent = $lockedRoom->price * $durationMonths;
+            $isDeposit = ($validated['payment_type'] ?? 'full') === 'deposit_50';
+            $depositAmount = $isDeposit ? round($totalRent * 0.5) : 0;
+            $initialInvoiceAmount = $isDeposit ? $depositAmount : $totalRent;
+
+            $lease = Lease::create([
+                'tenant_id'      => $tenant->id,
+                'room_id'        => $lockedRoom->id,
+                'start_date'     => $startDate->toDateString(),
+                'end_date'       => $endDate->toDateString(),
+                'monthly_price'  => $lockedRoom->price,
+                'deposit_amount' => $depositAmount,
+                'status'         => 'pending',
+                'note'           => "Durasi sewa {$durationMonths} bulan. " . ($isDeposit
+                    ? "Tagihan Uang Muka (Deposit 50%) Rp " . number_format($depositAmount, 0, ',', '.') . ". Sisa pelunasan Rp " . number_format($totalRent - $depositAmount, 0, ',', '.') . "."
+                    : "Tagihan sewa ({$durationMonths} bulan)."),
+            ]);
+
+            // Terbitkan Invoice Resmi (Payment) dengan tenggat 1x24 jam
+            $baseNumber = 'INV-' . now()->format('Ym') . '-';
+            $counter = Payment::count() + 1;
             $invoiceNumber = $baseNumber . str_pad($counter, 4, '0', STR_PAD_LEFT);
+
+            while (Payment::where('invoice_number', $invoiceNumber)->exists()) {
+                $counter++;
+                $invoiceNumber = $baseNumber . str_pad($counter, 4, '0', STR_PAD_LEFT);
+            }
+
+            $paymentNotes = $isDeposit
+                ? "Tagihan Uang Muka (Deposit 50%) sewa kamar {$lockedRoom->room_number} ({$durationMonths} bulan). Sisa pelunasan: Rp " . number_format($totalRent - $depositAmount, 0, ',', '.') . "."
+                : "Tagihan sewa kamar {$lockedRoom->room_number} ({$durationMonths} bulan).";
+
+            return Payment::create([
+                'lease_id'       => $lease->id,
+                'invoice_number' => $invoiceNumber,
+                'amount'         => $initialInvoiceAmount,
+                'billing_period' => $startDate->startOfMonth()->toDateString(),
+                'due_date'       => now()->addDay()->toDateString(), // Tenggat 1x24 jam
+                'payment_method' => 'bank_tf',
+                'status'         => 'unpaid',
+                'notes'          => $paymentNotes,
+            ]);
+        });
+
+        if (! $payment) {
+            return back()
+                ->withInput()
+                ->with('error', 'Maaf, kamar ini baru saja dipesan oleh calon penyewa lain. Silakan pilih kamar lain.');
         }
-
-        $paymentNotes = $isDeposit
-            ? "Tagihan Uang Muka (Deposit 50%) sewa kamar {$room->room_number}. Sisa pelunasan: Rp " . number_format($totalRent - $depositAmount, 0, ',', '.') . "."
-            : "Tagihan sewa kamar {$room->room_number} (1 bulan).";
-
-        $payment = Payment::create([
-            'lease_id'       => $lease->id,
-            'invoice_number' => $invoiceNumber,
-            'amount'         => $initialInvoiceAmount,
-            'billing_period' => $startDate->startOfMonth()->toDateString(),
-            'due_date'       => now()->addDay()->toDateString(), // Tenggat 1x24 jam
-            'payment_method' => 'bank_tf',
-            'status'         => 'unpaid',
-            'notes'          => $paymentNotes,
-        ]);
-
 
         return redirect()->to($payment->public_url)
             ->with('success', 'Pengajuan sewa berhasil! Invoice resmi Anda telah terbit. Silakan lakukan pembayaran dalam batas waktu 1x24 jam.');

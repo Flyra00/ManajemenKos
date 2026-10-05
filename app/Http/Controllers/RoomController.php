@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Room;
 use App\Models\Facility;
+use App\Services\LeaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -13,8 +14,11 @@ class RoomController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request, LeaseService $leaseService)
     {
+        // Tutup otomatis kontrak yang sudah berakhir agar status kamar akurat.
+        $leaseService->expireOverdueLeases();
+
         $query = Room::with(['facilities', 'activeLease.tenant.user'])->latest();
 
         if ($search = $request->input('search')) {
@@ -240,6 +244,16 @@ class RoomController extends Controller
             return redirect()
                 ->route('rooms.index')
                 ->with('error', 'Tidak dapat menghapus kamar yang sedang dalam proses perbaikan/maintenance.');
+        }
+
+        // Lindungi riwayat keuangan: relasi leases -> payments memakai cascadeOnDelete,
+        // jadi menghapus kamar yang pernah memiliki kontrak sewa (meski sudah selesai)
+        // akan ikut menghapus seluruh riwayat tagihan & pembayarannya.
+        // Nonaktifkan kamar (is_active = false) sebagai gantinya.
+        if ($room->leases()->exists()) {
+            return redirect()
+                ->route('rooms.index')
+                ->with('error', 'Tidak dapat menghapus kamar yang memiliki riwayat kontrak sewa. Nonaktifkan kamar ini sebagai gantinya agar riwayat pembayaran tetap tersimpan.');
         }
 
         if ($room->image && Storage::disk('public')->exists($room->image)) {

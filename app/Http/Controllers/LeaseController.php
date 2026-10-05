@@ -7,17 +7,22 @@ use App\Models\Lease;
 use App\Models\Room;
 use App\Models\Tenant;
 use App\Services\BillingService;
+use App\Services\LeaseService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class LeaseController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request, LeaseService $leaseService)
     {
+        // Tutup otomatis kontrak yang masa aktifnya sudah berakhir sebelum menampilkan data.
+        $leaseService->expireOverdueLeases();
+
         $query = Lease::with(['tenant.user', 'room'])->latest();
 
         if ($search = $request->input('search')) {
@@ -92,6 +97,22 @@ class LeaseController extends Controller
             'note'           => ['nullable', 'string'],
         ]);
 
+        if ($validated['status'] === 'active') {
+            $room = Room::findOrFail($validated['room_id']);
+
+            if ($room->status === 'maintenance') {
+                throw ValidationException::withMessages([
+                    'room_id' => 'Kamar ini sedang dalam status perbaikan (maintenance) dan tidak dapat disewakan.',
+                ]);
+            }
+
+            if (Lease::where('room_id', $validated['room_id'])->where('status', 'active')->exists()) {
+                throw ValidationException::withMessages([
+                    'room_id' => 'Kamar ini sudah memiliki kontrak sewa aktif. Silakan pilih kamar lain atau ubah status kontrak sebelumnya.',
+                ]);
+            }
+        }
+
         DB::transaction(function () use ($validated) {
             $lease = Lease::create([
                 'tenant_id'      => $validated['tenant_id'],
@@ -149,6 +170,27 @@ class LeaseController extends Controller
             'status'         => ['required', 'in:pending,active,completed,cancelled'],
             'note'           => ['nullable', 'string'],
         ]);
+
+        if ($validated['status'] === 'active') {
+            $targetRoom = Room::findOrFail($validated['room_id']);
+
+            if ($targetRoom->status === 'maintenance') {
+                throw ValidationException::withMessages([
+                    'room_id' => 'Kamar ini sedang dalam status perbaikan (maintenance) dan tidak dapat disewakan.',
+                ]);
+            }
+
+            $hasOtherActiveLease = Lease::where('room_id', $validated['room_id'])
+                ->where('status', 'active')
+                ->whereKeyNot($lease->id)
+                ->exists();
+
+            if ($hasOtherActiveLease) {
+                throw ValidationException::withMessages([
+                    'room_id' => 'Kamar ini sudah memiliki kontrak sewa aktif lain. Silakan pilih kamar lain atau ubah status kontrak sebelumnya.',
+                ]);
+            }
+        }
 
         DB::transaction(function () use ($validated, $lease) {
             $oldRoomId = $lease->room_id;

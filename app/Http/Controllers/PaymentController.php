@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Lease;
 use App\Models\Payment;
 use App\Services\BillingService;
-use Carbon\Carbon;
+use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -14,6 +14,10 @@ use Illuminate\Validation\Rule;
 
 class PaymentController extends Controller
 {
+    public function __construct(protected PaymentService $paymentService)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -116,7 +120,7 @@ class PaymentController extends Controller
             $verifiedBy = auth()->id();
         }
 
-        Payment::create([
+        $payment = Payment::create([
             'lease_id'       => $validated['lease_id'],
             'invoice_number' => $validated['invoice_number'],
             'amount'         => $validated['amount'],
@@ -129,6 +133,12 @@ class PaymentController extends Controller
             'verified_by'    => $verifiedBy,
             'notes'          => $validated['notes'] ?? null,
         ]);
+
+        // Bila admin langsung mencatat pembayaran lunas, sinkronkan kontrak & kamar
+        // dengan logika yang sama seperti verifikasi/notifikasi pembayaran lainnya.
+        if ($validated['status'] === 'paid') {
+            $this->paymentService->synchronizeLeaseOnPaid($payment);
+        }
 
         return redirect()
             ->route('payments.index')
@@ -208,21 +218,10 @@ class PaymentController extends Controller
             'notes'          => $validated['notes'] ?? null,
         ]);
 
-        if ($validated['status'] === 'paid' && $previousStatus !== 'paid' && $payment->lease) {
-            $isInitialActivation = ($payment->lease->status === 'pending');
-            if ($payment->lease->room) {
-                $payment->lease->room->update(['status' => 'occupied']);
-            }
-            if ($isInitialActivation) {
-                $payment->lease->update(['status' => 'active']);
-            } else {
-                $currentEnd = Carbon::parse($payment->lease->end_date ?: now());
-                $baseDate = $currentEnd->isPast() ? now() : $currentEnd;
-                $payment->lease->update([
-                    'status'   => 'active',
-                    'end_date' => $baseDate->copy()->addDays(30)->toDateString(),
-                ]);
-            }
+        // Hanya sinkronkan saat status BARU berubah menjadi lunas, agar masa sewa
+        // tidak diperpanjang berkali-kali ketika admin menyimpan ulang.
+        if ($validated['status'] === 'paid' && $previousStatus !== 'paid') {
+            $this->paymentService->synchronizeLeaseOnPaid($payment);
         }
 
         return redirect()
@@ -257,64 +256,9 @@ class PaymentController extends Controller
             'verified_by'  => auth()->id(),
         ]);
 
-        // Aktifkan kontrak sewa jika ada dan perpanjang masa aktif +30 hari
-        if ($payment->lease) {
-            $isInitialActivation = ($payment->lease->status === 'pending');
-
-            // Perbarui status kamar menjadi occupied
-            if ($payment->lease->room) {
-                $payment->lease->room->update(['status' => 'occupied']);
-            }
-
-            if ($isInitialActivation) {
-                // Aktivasi kontrak pertama kali (sudah memiliki 60 hari masa aktif awal)
-                $payment->lease->update(['status' => 'active']);
-            } else {
-                // Pembayaran sewa bulanan berjalan: Tambah masa aktif +30 hari
-                $currentEnd = Carbon::parse($payment->lease->end_date ?: now());
-                $baseDate = $currentEnd->isPast() ? now() : $currentEnd;
-                $newEndDate = $baseDate->copy()->addDays(30);
-
-                $payment->lease->update([
-                    'status'   => 'active',
-                    'end_date' => $newEndDate->toDateString(),
-                ]);
-            }
-
-            // SINKRONISASI DEPOSIT: Jika pembayaran ini adalah uang muka / deposit
-            // dan masih ada sisa sewa yang harus dilunasi, terbitkan invoice pelunasan (sisa)
-            if ($payment->lease->deposit_amount > 0) {
-                $totalRent = (float) $payment->lease->m_price;
-                $totalPaid = (float) $payment->lease->payments()->where('status', 'paid')->sum('amount');
-                $remaining = max(0, $totalRent - $totalPaid);
-
-                $hasPendingRemaining = $payment->lease->payments()
-                    ->where('id', '!=', $payment->id)
-                    ->whereIn('status', ['unpaid', 'pending'])
-                    ->exists();
-
-                if ($remaining > 0 && !$hasPendingRemaining) {
-                    $baseNumber = 'INV-' . now()->format('Ym') . '-';
-                    $counter = Payment::count() + 1;
-                    $remInvoiceNumber = $baseNumber . str_pad($counter, 4, '0', STR_PAD_LEFT);
-                    while (Payment::where('invoice_number', $remInvoiceNumber)->exists()) {
-                        $counter++;
-                        $remInvoiceNumber = $baseNumber . str_pad($counter, 4, '0', STR_PAD_LEFT);
-                    }
-
-                    Payment::create([
-                        'lease_id'       => $payment->lease->id,
-                        'invoice_number' => $remInvoiceNumber,
-                        'amount'         => $remaining,
-                        'billing_period' => $payment->billing_period,
-                        'due_date'       => $payment->lease->start_date ? Carbon::parse($payment->lease->start_date)->toDateString() : now()->addDays(7)->toDateString(),
-                        'payment_method' => 'bank_tf',
-                        'status'         => 'unpaid',
-                        'notes'          => "Tagihan Pelunasan Sewa (Sisa setelah Uang Muka Rp " . number_format($payment->amount, 0, ',', '.') . ") Kamar " . ($payment->lease->room->room_number ?? '—') . ".",
-                    ]);
-                }
-            }
-        }
+        // Aktifkan/perpanjang kontrak + sinkronkan kamar & invoice sisa deposit
+        // lewat service terpusat (sumber kebenaran tunggal untuk semua kanal bayar).
+        $this->paymentService->synchronizeLeaseOnPaid($payment);
 
         return back()->with('success', "Pembayaran invoice {$payment->invoice_number} berhasil diverifikasi Lunas! Kontrak aktif dan kamar resmi terisi.");
     }

@@ -8,13 +8,17 @@ use App\Models\MaintenanceRequest;
 use App\Models\Payment;
 use App\Models\Room;
 use App\Models\Tenant;
+use App\Services\LeaseService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(LeaseService $leaseService)
     {
+        // Tutup otomatis kontrak sewa yang masa aktifnya sudah berakhir.
+        $leaseService->expireOverdueLeases();
+
         $user = auth()->user();
 
         // Jika user adalah Penyewa (Tenant), tampilkan Portal Khusus Penghuni

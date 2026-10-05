@@ -70,6 +70,10 @@ class MaintenanceController extends Controller
         $user = auth()->user();
         $isTenant = $this->isTenantUser($user);
 
+        if (! $isTenant && ! $user->hasRole('admin') && ! $user->hasRole('owner') && ! $user->hasRole('staff')) {
+            abort(403, 'Anda tidak memiliki hak akses untuk melihat data maintenance.');
+        }
+
         $query = MaintenanceRequest::with(['room', 'tenant.user', 'handler'])->latest();
 
         if ($isTenant) {
@@ -153,10 +157,12 @@ class MaintenanceController extends Controller
             $users = collect();
             $selectedTenantId = $tenant->id;
             $selectedRoomId = $selectedRoomId ?? $rooms->first()?->id;
-        } else {
+        } elseif ($user->hasRole('admin') || $user->hasRole('staff')) {
             $rooms = Room::all();
             $tenants = Tenant::with('user')->get();
             $users = $this->getStaffUsers();
+        } else {
+            abort(403, 'Anda tidak memiliki hak akses untuk membuat laporan maintenance.');
         }
 
         return view('maintenance.create', compact('rooms', 'tenants', 'users', 'selectedRoomId', 'selectedTenantId'));
@@ -169,6 +175,10 @@ class MaintenanceController extends Controller
     {
         $user = auth()->user();
         $isTenant = $this->isTenantUser($user);
+
+        if (! $isTenant && ! $user->hasRole('admin') && ! $user->hasRole('staff')) {
+            abort(403, 'Anda tidak memiliki hak akses untuk membuat laporan maintenance.');
+        }
 
         if ($isTenant) {
             $tenant = $user->tenant;
@@ -280,6 +290,8 @@ class MaintenanceController extends Controller
             if ($maintenance->tenant_id !== $user->tenant?->id) {
                 abort(403, 'Anda tidak memiliki hak akses untuk melihat tiket keluhan ini.');
             }
+        } elseif (! $user->hasRole('admin') && ! $user->hasRole('owner') && ! $user->hasRole('staff')) {
+            abort(403, 'Anda tidak memiliki hak akses untuk melihat tiket keluhan ini.');
         }
 
         $maintenance->load(['room', 'tenant.user', 'handler']);
@@ -306,6 +318,10 @@ class MaintenanceController extends Controller
             $tenants = collect([$user->tenant->load('user')]);
             $users = collect();
             return view('maintenance.edit', compact('maintenance', 'rooms', 'tenants', 'users', 'isTenant'));
+        }
+
+        if (! $user->hasRole('admin') && ! $user->hasRole('staff')) {
+            abort(403, 'Anda tidak memiliki hak akses untuk mengedit tiket keluhan ini.');
         }
 
         $rooms = Room::all();
@@ -364,6 +380,10 @@ class MaintenanceController extends Controller
             return redirect()
                 ->route('maintenance.index')
                 ->with('success', 'Laporan keluhan berhasil diperbarui');
+        }
+
+        if (! $user->hasRole('admin') && ! $user->hasRole('staff')) {
+            abort(403, 'Anda tidak memiliki hak akses untuk memperbarui laporan maintenance.');
         }
 
         $validated = $request->validate([
@@ -452,6 +472,8 @@ class MaintenanceController extends Controller
                 return redirect()->route('maintenance.index')
                     ->with('error', 'Laporan yang sedang diproses atau telah selesai tidak dapat dibatalkan.');
             }
+        } elseif (! $user->hasRole('admin') && ! $user->hasRole('staff')) {
+            abort(403, 'Anda tidak memiliki hak akses untuk menghapus laporan maintenance.');
         }
 
         if ($maintenance->image_path && Storage::disk('public')->exists($maintenance->image_path)) {

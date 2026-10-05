@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Facility;
 use App\Models\Lease;
+use App\Models\Payment;
 use App\Models\Room;
 use App\Models\Tenant;
 use App\Models\User;
@@ -213,6 +214,54 @@ class RoomTest extends TestCase
         $this->assertDatabaseMissing('rooms', [
             'id' => $room->id,
         ]);
+    }
+
+    public function test_room_with_lease_history_cannot_be_deleted_to_preserve_payments(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+        $tenantUser = User::factory()->create();
+        $tenant = Tenant::create([
+            'user_id' => $tenantUser->id,
+            'ktp_number' => '3201111122224444',
+        ]);
+
+        $room = Room::create([
+            'room_number' => 'D-403',
+            'floor' => '4',
+            'price' => 2500000,
+            'status' => 'available',
+        ]);
+
+        // Kontrak historis yang sudah selesai (check-out) beserta pembayarannya
+        $lease = Lease::create([
+            'tenant_id' => $tenant->id,
+            'room_id' => $room->id,
+            'start_date' => now()->subMonths(2)->toDateString(),
+            'end_date' => now()->subMonth()->toDateString(),
+            'm_price' => 2500000,
+            'status' => 'completed',
+        ]);
+
+        Payment::create([
+            'lease_id' => $lease->id,
+            'invoice_number' => 'INV-ROOMDEL-01',
+            'amount' => 2500000,
+            'billing_period' => now()->subMonths(2)->startOfMonth()->toDateString(),
+            'due_date' => now()->subMonths(2)->addDays(9)->toDateString(),
+            'payment_method' => 'bank_tf',
+            'status' => 'paid',
+        ]);
+
+        $response = $this->actingAs($admin)->delete(route('rooms.destroy', $room));
+
+        $response->assertRedirect(route('rooms.index'));
+        $response->assertSessionHas('error');
+
+        // Kamar, kontrak, dan riwayat pembayaran harus tetap utuh.
+        $this->assertDatabaseHas('rooms', ['id' => $room->id]);
+        $this->assertDatabaseHas('leases', ['id' => $lease->id]);
+        $this->assertDatabaseHas('payments', ['invoice_number' => 'INV-ROOMDEL-01']);
     }
 
     public function test_room_cannot_be_deleted_when_has_active_lease(): void

@@ -393,7 +393,7 @@ class TenantTest extends TestCase
         $response->assertSee('Nomor KTP (NIK Pribadi)');
     }
 
-    public function test_booking_gives_60_days_initial_lease_duration(): void
+    public function test_booking_defaults_to_1_month_lease_duration(): void
     {
         $room = Room::create([
             'room_number' => 'X-99',
@@ -418,8 +418,41 @@ class TenantTest extends TestCase
         $lease = Lease::where('room_id', $room->id)->first();
         $this->assertNotNull($lease);
 
-        // Masa aktif awal harus 60 hari
-        $this->assertEquals($today->copy()->addDays(60)->toDateString(), $lease->end_date->toDateString());
+        // Masa aktif default 1 bulan
+        $this->assertEquals($today->copy()->addMonths(1)->toDateString(), $lease->end_date->toDateString());
+    }
+
+    public function test_booking_calculates_end_date_and_invoice_for_selected_duration_months(): void
+    {
+        $room = Room::create([
+            'room_number' => 'X-100',
+            'price'       => 1500000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $today = now()->startOfDay();
+
+        $response = $this->post(route('public.rooms.book', $room), [
+            'name'            => 'Penyewa 3 Bulan',
+            'email'           => 'tiga@example.com',
+            'phone'           => '081234567801',
+            'ktp_number'      => '3201012345670014',
+            'password'        => 'password123',
+            'start_date'      => $today->toDateString(),
+            'duration_months' => 3,
+        ]);
+
+        $response->assertRedirect();
+
+        $lease = Lease::where('room_id', $room->id)->first();
+        $this->assertNotNull($lease);
+        $this->assertEquals($today->copy()->addMonths(3)->toDateString(), $lease->end_date->toDateString());
+
+        // Invoice harus bernilai 3 x 1.500.000 = 4.500.000
+        $payment = $lease->payments()->first();
+        $this->assertNotNull($payment);
+        $this->assertEquals(4500000, (float) $payment->amount);
     }
 
     public function test_verifying_subsequent_monthly_payment_extends_lease_by_30_days(): void

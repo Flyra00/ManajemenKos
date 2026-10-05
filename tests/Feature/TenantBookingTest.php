@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Facility;
+use App\Models\Lease;
 use App\Models\Payment;
 use App\Models\Room;
+use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -71,6 +73,126 @@ class TenantBookingTest extends TestCase
         $response->assertSee('Kamar C-03');
         $response->assertSee('Kamar Mandi Dalam');
         $response->assertSee('Formulir Sewa Kamar');
+    }
+
+    public function test_room_cannot_be_booked_twice_while_booking_awaits_payment(): void
+    {
+        $room = Room::create([
+            'room_number' => 'DBL-01',
+            'floor'       => 1,
+            'price'       => 1500000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        // Booking pertama berhasil
+        $this->post(route('public.rooms.book', $room), [
+            'name'            => 'Penyewa Pertama',
+            'email'           => 'pertama@example.com',
+            'phone'           => '081200000001',
+            'ktp_number'      => '3201012345671001',
+            'password'        => 'password123',
+            'start_date'      => now()->toDateString(),
+            'duration_months' => 1,
+        ])->assertSessionHas('success');
+
+        // Booking kedua untuk kamar yang sama harus ditolak (kamar masih dipegang booking pertama)
+        $response = $this->post(route('public.rooms.book', $room), [
+            'name'            => 'Penyewa Kedua',
+            'email'           => 'kedua@example.com',
+            'phone'           => '081200000002',
+            'ktp_number'      => '3201012345671002',
+            'password'        => 'password123',
+            'start_date'      => now()->toDateString(),
+            'duration_months' => 1,
+        ]);
+
+        $response->assertSessionHas('error');
+
+        // Hanya boleh ada satu kontrak untuk kamar ini, dan akun penyewa kedua tidak dibuat.
+        $this->assertSame(1, Lease::where('room_id', $room->id)->count());
+        $this->assertDatabaseMissing('users', ['email' => 'kedua@example.com']);
+    }
+
+    public function test_expired_pending_booking_is_released_and_room_can_be_rebooked(): void
+    {
+        $room = Room::create([
+            'room_number' => 'EXP-01',
+            'floor'       => 1,
+            'price'       => 1500000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        // Booking lama yang ditinggalkan: pending, invoicenya sudah lewat jatuh tempo.
+        $user = User::factory()->create();
+        $user->assignRole('tenant');
+        $tenant = Tenant::create(['user_id' => $user->id, 'ktp_number' => '3201012345671099']);
+
+        $lease = Lease::create([
+            'tenant_id'      => $tenant->id,
+            'room_id'        => $room->id,
+            'start_date'     => now()->subDays(3)->toDateString(),
+            'end_date'       => now()->addDays(57)->toDateString(),
+            'monthly_price'  => 1500000,
+            'deposit_amount' => 0,
+            'status'         => 'pending',
+        ]);
+
+        Payment::create([
+            'lease_id'       => $lease->id,
+            'invoice_number' => 'INV-EXP-001',
+            'amount'         => 1500000,
+            'billing_period' => now()->subDays(3)->startOfMonth()->toDateString(),
+            'due_date'       => now()->subDays(2)->toDateString(),
+            'payment_method' => 'bank_tf',
+            'status'         => 'unpaid',
+        ]);
+
+        // Booking baru untuk kamar yang sama harus berhasil
+        $response = $this->post(route('public.rooms.book', $room), [
+            'name'            => 'Penyewa Pengganti',
+            'email'           => 'pengganti@example.com',
+            'phone'           => '081200000012',
+            'ktp_number'      => '3201012345671012',
+            'password'        => 'password123',
+            'start_date'      => now()->toDateString(),
+            'duration_months' => 1,
+        ]);
+
+        $response->assertSessionHas('success');
+
+        // Booking lama dibebaskan (dibatalkan), booking baru tercatat.
+        $this->assertSame('cancelled', $lease->fresh()->status);
+        $this->assertSame(2, Lease::where('room_id', $room->id)->count());
+    }
+
+    public function test_room_with_pending_booking_is_hidden_from_public_catalog(): void
+    {
+        $room = Room::create([
+            'room_number' => 'HID-01',
+            'floor'       => 1,
+            'price'       => 1500000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $this->post(route('public.rooms.book', $room), [
+            'name'            => 'Penyewa Holding',
+            'email'           => 'holding@example.com',
+            'phone'           => '081200000021',
+            'ktp_number'      => '3201012345671021',
+            'password'        => 'password123',
+            'start_date'      => now()->toDateString(),
+            'duration_months' => 1,
+        ])->assertSessionHas('success');
+
+        // Status kamar masih 'available' (belum dibayar), tapi tidak boleh tampil di katalog publik.
+        $this->assertSame('available', $room->fresh()->status);
+
+        $response = $this->get(route('public.rooms.index'));
+        $response->assertOk();
+        $response->assertDontSee('HID-01');
     }
 
     public function test_guest_can_book_room_and_receive_invoice_with_24h_due_date(): void

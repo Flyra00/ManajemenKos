@@ -15,24 +15,20 @@ class PublicRoomController extends Controller
      */
     public function landing(BillingService $billingService)
     {
-        // Hanya ambil kamar yang aktif dan berstatus 'available' (kosong)
+        // Hanya ambil kamar yang benar-benar bebas (aktif, available, dan tidak
+        // sedang dipegang kontrak/booking lain).
         $availableRooms = Room::with('facilities')
-            ->where('is_active', true)
-            ->where('status', 'available')
+            ->availableForBooking()
             ->orderBy('floor')
             ->orderBy('room_number')
             ->take(6)
             ->get();
 
-        $totalAvailable = Room::where('is_active', true)
-            ->where('status', 'available')
-            ->count();
+        $totalAvailable = Room::availableForBooking()->count();
 
         $totalRooms = Room::where('is_active', true)->count();
 
-        $startingPrice = Room::where('is_active', true)
-            ->where('status', 'available')
-            ->min('price') ?: 1000000;
+        $startingPrice = Room::availableForBooking()->min('price') ?: 1000000;
 
         $facilities = Facility::latest()->take(8)->get();
 
@@ -63,8 +59,7 @@ class PublicRoomController extends Controller
     public function index(Request $request)
     {
         $query = Room::with('facilities')
-            ->where('is_active', true)
-            ->where('status', 'available');
+            ->availableForBooking();
 
         if ($request->filled('q')) {
             $query->where('room_number', 'like', '%' . $request->q . '%');

@@ -275,5 +275,154 @@ class LeaseTest extends TestCase
 
         $this->assertDatabaseHas('leases', ['id' => $lease->id]);
     }
+
+    public function test_admin_cannot_create_active_lease_for_room_with_existing_active_lease(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $tenantUser1 = User::factory()->create();
+        $tenant1 = Tenant::create(['user_id' => $tenantUser1->id, 'ktp_number' => '3201112233440001']);
+
+        $tenantUser2 = User::factory()->create();
+        $tenant2 = Tenant::create(['user_id' => $tenantUser2->id, 'ktp_number' => '3201112233440002']);
+
+        $room = Room::create([
+            'room_number' => 'L-201',
+            'price' => 1500000,
+            'status' => 'occupied',
+        ]);
+
+        Lease::create([
+            'tenant_id' => $tenant1->id,
+            'room_id' => $room->id,
+            'start_date' => now()->toDateString(),
+            'm_price' => 1500000,
+            'status' => 'active',
+        ]);
+
+        // Coba buat lease active kedua untuk kamar yang sama
+        $response = $this->actingAs($admin)->post(route('leases.store'), [
+            'tenant_id' => $tenant2->id,
+            'room_id' => $room->id,
+            'start_date' => now()->toDateString(),
+            'monthly_price' => 1500000,
+            'status' => 'active',
+        ]);
+
+        $response->assertSessionHasErrors(['room_id']);
+        $this->assertSame(1, Lease::where('room_id', $room->id)->count());
+    }
+
+    public function test_admin_cannot_create_active_lease_for_room_in_maintenance(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $tenantUser = User::factory()->create();
+        $tenant = Tenant::create(['user_id' => $tenantUser->id, 'ktp_number' => '3201112233440003']);
+
+        $room = Room::create([
+            'room_number' => 'L-202',
+            'price' => 1500000,
+            'status' => 'maintenance',
+        ]);
+
+        $response = $this->actingAs($admin)->post(route('leases.store'), [
+            'tenant_id' => $tenant->id,
+            'room_id' => $room->id,
+            'start_date' => now()->toDateString(),
+            'monthly_price' => 1500000,
+            'status' => 'active',
+        ]);
+
+        $response->assertSessionHasErrors(['room_id']);
+        $this->assertSame(0, Lease::where('room_id', $room->id)->count());
+    }
+
+    public function test_admin_cannot_update_lease_to_active_if_room_already_has_active_lease(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $tenantUser1 = User::factory()->create();
+        $tenant1 = Tenant::create(['user_id' => $tenantUser1->id, 'ktp_number' => '3201112233440004']);
+        $tenantUser2 = User::factory()->create();
+        $tenant2 = Tenant::create(['user_id' => $tenantUser2->id, 'ktp_number' => '3201112233440005']);
+
+        $room = Room::create([
+            'room_number' => 'L-203',
+            'price' => 1500000,
+            'status' => 'occupied',
+        ]);
+
+        // Lease 1 sudah aktif
+        Lease::create([
+            'tenant_id' => $tenant1->id,
+            'room_id' => $room->id,
+            'start_date' => now()->toDateString(),
+            'm_price' => 1500000,
+            'status' => 'active',
+        ]);
+
+        // Lease 2 awalnya pending
+        $lease2 = Lease::create([
+            'tenant_id' => $tenant2->id,
+            'room_id' => $room->id,
+            'start_date' => now()->toDateString(),
+            'm_price' => 1500000,
+            'status' => 'pending',
+        ]);
+
+        // Coba ubah lease 2 menjadi active
+        $response = $this->actingAs($admin)->put(route('leases.update', $lease2), [
+            'tenant_id' => $tenant2->id,
+            'room_id' => $room->id,
+            'start_date' => now()->toDateString(),
+            'monthly_price' => 1500000,
+            'status' => 'active',
+        ]);
+
+        $response->assertSessionHasErrors(['room_id']);
+        $this->assertSame('pending', $lease2->fresh()->status);
+    }
+
+    public function test_admin_can_update_existing_active_lease_without_error(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $tenantUser = User::factory()->create();
+        $tenant = Tenant::create(['user_id' => $tenantUser->id, 'ktp_number' => '3201112233440006']);
+
+        $room = Room::create([
+            'room_number' => 'L-204',
+            'price' => 1500000,
+            'status' => 'occupied',
+        ]);
+
+        $lease = Lease::create([
+            'tenant_id' => $tenant->id,
+            'room_id' => $room->id,
+            'start_date' => now()->toDateString(),
+            'm_price' => 1500000,
+            'status' => 'active',
+        ]);
+
+        // Update catatan atau harga pada lease aktif yang sama tidak boleh ditolak
+        $response = $this->actingAs($admin)->put(route('leases.update', $lease), [
+            'tenant_id' => $tenant->id,
+            'room_id' => $room->id,
+            'start_date' => now()->toDateString(),
+            'monthly_price' => 1600000,
+            'status' => 'active',
+            'note' => 'Perpanjangan kesepakatan',
+        ]);
+
+        $response->assertRedirect(route('leases.index'));
+        $response->assertSessionHas('success');
+        $this->assertEquals(1600000, $lease->fresh()->m_price);
+    }
 }
+
 

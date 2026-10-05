@@ -122,6 +122,56 @@ class MidtransWebhookSecurityTest extends TestCase
         $this->assertSame(1, (int) $lease->renewal_count);
     }
 
+    public function test_settlement_on_deposit_invoice_also_issues_remaining_invoice(): void
+    {
+        $user = User::factory()->create();
+        $tenant = Tenant::create(['user_id' => $user->id, 'ktp_number' => '3201000000000002']);
+        $room = Room::create(['room_number' => 'B-202', 'price' => 1000000, 'status' => 'available']);
+
+        $lease = Lease::create([
+            'tenant_id'      => $tenant->id,
+            'room_id'        => $room->id,
+            'start_date'     => now()->toDateString(),
+            'end_date'       => now()->addDays(60)->toDateString(),
+            'm_price'        => 1000000,
+            'deposit_amount' => 500000,
+            'status'         => 'pending',
+        ]);
+
+        $deposit = Payment::create([
+            'lease_id'       => $lease->id,
+            'invoice_number' => 'INV-DEP-001',
+            'amount'         => 500000,
+            'billing_period' => now()->startOfMonth()->toDateString(),
+            'due_date'       => now()->addDay()->toDateString(),
+            'payment_method' => 'bank_tf',
+            'status'         => 'unpaid',
+        ]);
+
+        $this->postJson(route('midtrans.notification'), [
+            'order_id'           => 'INV-DEP-001',
+            'status_code'        => '200',
+            'gross_amount'       => '500000.00',
+            'transaction_status' => 'settlement',
+            'payment_type'       => 'qris',
+            'fraud_status'       => 'accept',
+            'signature_key'      => hash('sha512', 'INV-DEP-001' . '200' . '500000.00' . self::SERVER_KEY),
+        ])->assertOk();
+
+        $deposit->refresh();
+        $this->assertSame('paid', $deposit->status);
+        $this->assertSame('active', $lease->fresh()->status);
+
+        // Sisa 50% wajib otomatis terbit walau dibayar lewat Midtrans (bukan verifikasi admin).
+        $remaining = Payment::where('lease_id', $lease->id)
+            ->where('id', '!=', $deposit->id)
+            ->first();
+
+        $this->assertNotNull($remaining, 'Sisa tagihan deposit harus otomatis terbit via Midtrans.');
+        $this->assertEquals(500000, (float) $remaining->amount);
+        $this->assertSame('unpaid', $remaining->status);
+    }
+
     public function test_late_expire_notification_does_not_revert_paid_invoice(): void
     {
         $payment = $this->makePayment();

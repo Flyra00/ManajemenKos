@@ -258,6 +258,33 @@ class PaymentTest extends TestCase
         $this->assertNotNull($payment->payment_date);
     }
 
+    public function test_admin_verification_extends_active_lease_and_counts_renewal(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+        $lease = $this->createLeaseFixture();
+
+        $payment = Payment::create([
+            'lease_id'       => $lease->id,
+            'invoice_number' => 'INV-VERIFY-EXT',
+            'amount'         => 1500000,
+            'billing_period' => now()->startOfMonth()->toDateString(),
+            'due_date'       => now()->addDays(5)->toDateString(),
+            'payment_method' => 'bank_tf',
+            'status'         => 'unpaid',
+        ]);
+
+        $this->actingAs($admin)->put(route('payments.verify', $payment))->assertSessionHas('success');
+
+        // Verifikasi admin harus menghasilkan sinkronisasi yang sama dengan Midtrans:
+        // kontrak aktif, masa aktif +30 hari, dan pencatatan perpanjangan.
+        $lease->refresh();
+        $this->assertSame('active', $lease->status);
+        $this->assertEquals(1, (int) $lease->renewal_count);
+        $this->assertNotNull($lease->last_renewed_at);
+        $this->assertEquals(now()->addDays(30)->toDateString(), $lease->end_date->toDateString());
+    }
+
     public function test_payment_can_be_deleted_safely(): void
     {
         $admin = User::factory()->create();

@@ -212,4 +212,94 @@ class TenantMaintenanceScopingTest extends TestCase
         $detailResponse->assertOk();
         $detailResponse->assertSee('Kerusakan untuk Admin');
     }
+
+    public function test_tenant_can_edit_and_update_own_reported_maintenance_request(): void
+    {
+        $user = User::factory()->create(['name' => 'Ferry Tenant']);
+        $user->assignRole('tenant');
+        $tenant = Tenant::create(['user_id' => $user->id, 'ktp_number' => '4444444444444444']);
+
+        $room = Room::create(['room_number' => 'E-05', 'floor' => 1, 'price' => 1000000, 'status' => 'occupied']);
+
+        $maint = MaintenanceRequest::create([
+            'room_id'     => $room->id,
+            'tenant_id'   => $tenant->id,
+            'title'       => 'Kran Air Menetes',
+            'description' => 'Perlu diganti sil karetnya.',
+            'priority'    => 'low',
+            'status'      => 'reported',
+            'cost'        => 0,
+            'reported_at' => now(),
+        ]);
+
+        // 1. Tenant bisa buka halaman edit untuk tiket reported miliknya
+        $editResponse = $this->actingAs($user)->get(route('maintenance.edit', $maint));
+        $editResponse->assertOk();
+        $editResponse->assertSee('Kran Air Menetes');
+
+        // 2. Tenant bisa submit update
+        $updateResponse = $this->actingAs($user)->put(route('maintenance.update', $maint), [
+            'room_id'     => $room->id,
+            'title'       => 'Kran Air Patah',
+            'priority'    => 'high',
+            'description' => 'Patah total dan air mengalir deras.',
+        ]);
+
+        $updateResponse->assertRedirect(route('maintenance.index'));
+        $updateResponse->assertSessionHas('success');
+
+        $maint->refresh();
+        $this->assertEquals('Kran Air Patah', $maint->title);
+        $this->assertEquals('high', $maint->priority);
+    }
+
+    public function test_tenant_cannot_edit_maintenance_request_once_in_progress(): void
+    {
+        $user = User::factory()->create(['name' => 'Ferry Tenant']);
+        $user->assignRole('tenant');
+        $tenant = Tenant::create(['user_id' => $user->id, 'ktp_number' => '4444444444444445']);
+
+        $room = Room::create(['room_number' => 'E-06', 'floor' => 1, 'price' => 1000000, 'status' => 'occupied']);
+
+        $maint = MaintenanceRequest::create([
+            'room_id'     => $room->id,
+            'tenant_id'   => $tenant->id,
+            'title'       => 'AC Rusak Sedang Diperbaiki',
+            'description' => 'Teknisi sudah datang.',
+            'priority'    => 'high',
+            'status'      => 'in_progress',
+            'cost'        => 0,
+            'reported_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->get(route('maintenance.edit', $maint));
+        $response->assertRedirect(route('maintenance.index'));
+        $response->assertSessionHas('error');
+    }
+
+    public function test_tenant_can_cancel_own_reported_maintenance_request(): void
+    {
+        $user = User::factory()->create(['name' => 'Ferry Tenant']);
+        $user->assignRole('tenant');
+        $tenant = Tenant::create(['user_id' => $user->id, 'ktp_number' => '4444444444444446']);
+
+        $room = Room::create(['room_number' => 'E-07', 'floor' => 1, 'price' => 1000000, 'status' => 'occupied']);
+
+        $maint = MaintenanceRequest::create([
+            'room_id'     => $room->id,
+            'tenant_id'   => $tenant->id,
+            'title'       => 'Salah Kirim Laporan',
+            'description' => 'Sudah normal kembali.',
+            'priority'    => 'low',
+            'status'      => 'reported',
+            'cost'        => 0,
+            'reported_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('maintenance.destroy', $maint));
+        $response->assertRedirect(route('maintenance.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('maintenance_requests', ['id' => $maint->id]);
+    }
 }

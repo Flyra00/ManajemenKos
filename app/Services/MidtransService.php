@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Payment;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Midtrans\Config;
 use Midtrans\Snap;
@@ -145,31 +144,10 @@ class MidtransService
                     'midtrans_response' => $payload,
                 ]);
 
-                // Sinkronisasi Kontrak Sewa: Tambah masa aktif sewa jika pembayaran lunas
-                if ($payment->lease) {
-                    $lease = $payment->lease;
-                    $isInitialActivation = ($lease->status === 'pending');
-
-                    if ($lease->room) {
-                        $lease->room->update(['status' => 'occupied']);
-                    }
-
-                    if ($isInitialActivation) {
-                        $lease->update(['status' => 'active']);
-                    } else {
-                        // Tambah masa aktif sewa +30 hari
-                        $currentEnd = Carbon::parse($lease->end_date ?: now());
-                        $baseDate = $currentEnd->isPast() ? now() : $currentEnd;
-                        $newEndDate = $baseDate->copy()->addDays(30);
-
-                        $lease->update([
-                            'status'          => 'active',
-                            'end_date'        => $newEndDate->toDateString(),
-                            'renewal_count'   => ($lease->renewal_count ?? 0) + 1,
-                            'last_renewed_at' => now(),
-                        ]);
-                    }
-                }
+                // Sinkronisasi kontrak sewa & kamar lewat service terpusat agar
+                // hasilnya konsisten dengan verifikasi admin dan update manual.
+                // Ini juga menerbitkan invoice sisa bila pembayaran ini uang muka.
+                app(PaymentService::class)->synchronizeLeaseOnPaid($payment);
             } elseif (in_array($transactionStatus, ['cancel', 'deny', 'expire'])) {
                 $payment->update([
                     'status'            => 'unpaid',
