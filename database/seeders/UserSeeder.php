@@ -25,9 +25,10 @@ class UserSeeder extends Seeder
                 'name'=> 'AdminRafly',
                 'phone' => '081234567890',
                 'password' => Hash::make('password'),
+                'email_verified_at' => now(),
             ]
         );
-
+        $admin->forceFill(['email_verified_at' => now()])->save();
         $admin->assignRole('admin');
 
         $owner = User::firstOrCreate(
@@ -36,9 +37,10 @@ class UserSeeder extends Seeder
                 'name' => 'OwnerRafly',
                 'phone'=> '081234567891',
                 'password'=> Hash::make('password'),
+                'email_verified_at' => now(),
             ]
         );
-
+        $owner->forceFill(['email_verified_at' => now()])->save();
         $owner->assignRole('owner');
 
         $staff = User::firstOrCreate(
@@ -47,9 +49,10 @@ class UserSeeder extends Seeder
                 'name' => 'StaffKos',
                 'phone'=> '081234567892',
                 'password'=> Hash::make('password'),
+                'email_verified_at' => now(),
             ]
         );
-
+        $staff->forceFill(['email_verified_at' => now()])->save();
         $staff->assignRole('staff');
     }
 }
