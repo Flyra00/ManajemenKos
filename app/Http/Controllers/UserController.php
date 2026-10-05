@@ -67,4 +67,29 @@ class UserController extends Controller
 
         return back()->with('success', "Peran pengguna {$user->name} berhasil diperbarui menjadi " . strtoupper($validated['role']) . ".");
     }
+
+    /**
+     * Reset kata sandi pengguna ke default (password123) oleh Admin.
+     */
+    public function resetPassword(User $user)
+    {
+        $defaultPassword = 'password123';
+        $user->update([
+            'password' => \Illuminate\Support\Facades\Hash::make($defaultPassword),
+        ]);
+
+        return back()->with('success', "Kata sandi untuk {$user->name} ({$user->email}) berhasil direset menjadi: {$defaultPassword}");
+    }
+
+    /**
+     * Verifikasi email pengguna secara manual oleh Admin.
+     */
+    public function verifyEmail(User $user)
+    {
+        if (is_null($user->email_verified_at)) {
+            $user->markEmailAsVerified();
+        }
+
+        return back()->with('success', "Akun {$user->name} ({$user->email}) berhasil diverifikasi manual oleh Admin.");
+    }
 }

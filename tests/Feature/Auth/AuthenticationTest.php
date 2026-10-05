@@ -36,12 +36,28 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->post('/login', [
+        $response = $this->post('/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
         ]);
 
         $this->assertGuest();
+        $response->assertSessionHasErrors([
+            'password' => 'Kata sandi yang Anda masukkan salah. Pastikan penulisan huruf besar/kecil sudah benar atau gunakan menu "Lupa password?".',
+        ]);
+    }
+
+    public function test_users_can_not_authenticate_with_unregistered_email(): void
+    {
+        $response = $this->post('/login', [
+            'email' => 'unregistered@example.com',
+            'password' => 'secret12345',
+        ]);
+
+        $this->assertGuest();
+        $response->assertSessionHasErrors([
+            'email' => 'Alamat email ini belum terdaftar di KosFly. Silakan periksa kembali email Anda atau klik "Daftar sekarang".',
+        ]);
     }
 
     public function test_users_can_logout(): void

@@ -100,7 +100,7 @@
                 <th>Peran Saat Ini</th>
                 <th>Terdaftar</th>
                 @if(auth()->check() && auth()->user()->hasRole('admin'))
-                  <th style="width:230px;">Kelola Peran</th>
+                  <th style="width:260px;">Kelola Akun (Admin)</th>
                 @endif
               </tr>
             </thead>
@@ -123,9 +123,20 @@
                         ✓ Terverifikasi
                       </span>
                     @else
-                      <span class="tag" style="background:#fffbeb; color:#92400e; border:1px solid #fef3c7; font-size:11px;">
-                        ⏳ Menunggu Gmail
-                      </span>
+                      <div class="flex items-center flex-wrap" style="gap:4px;">
+                        <span class="tag" style="background:#fffbeb; color:#92400e; border:1px solid #fef3c7; font-size:11px;">
+                          ⏳ Menunggu Gmail
+                        </span>
+                        @if(auth()->check() && auth()->user()->hasRole('admin'))
+                          <form method="POST" action="{{ route('users.verify-email', $u) }}" onsubmit="return confirm('Verifikasi email akun {{ $u->name }} secara manual?')">
+                            @csrf
+                            @method('PUT')
+                            <button type="submit" class="btn btn-sm" style="padding: 2px 6px; font-size: 10px; background:#f0fdf4; color:#166534; border:1px solid #bbf7d0;" title="Verifikasi email langsung">
+                              Verifikasi
+                            </button>
+                          </form>
+                        @endif
+                      </div>
                     @endif
                   </td>
                   <td>
@@ -144,19 +155,29 @@
                   </td>
                   @if(auth()->check() && auth()->user()->hasRole('admin'))
                     <td>
-                      <form method="POST" action="{{ route('users.role', $u) }}" class="flex items-center" style="gap:6px">
-                        @csrf
-                        @method('PUT')
-                        <select class="input py-1 text-xs" name="role" style="min-width:105px;">
-                          <option value="admin" @selected($currentRole === 'admin')>Admin</option>
-                          <option value="owner" @selected($currentRole === 'owner')>Owner</option>
-                          <option value="staff" @selected($currentRole === 'staff')>Staff</option>
-                          <option value="tenant" @selected($currentRole === 'tenant')>Tenant</option>
-                        </select>
-                        <button type="submit" class="btn btn-secondary btn-sm" title="Terapkan peran">
-                          Ubah
-                        </button>
-                      </form>
+                      <div class="flex items-center flex-wrap" style="gap:6px">
+                        <form method="POST" action="{{ route('users.role', $u) }}" class="flex items-center" style="gap:4px">
+                          @csrf
+                          @method('PUT')
+                          <select class="input py-1 text-xs" name="role" style="min-width:90px;">
+                            <option value="admin" @selected($currentRole === 'admin')>Admin</option>
+                            <option value="owner" @selected($currentRole === 'owner')>Owner</option>
+                            <option value="staff" @selected($currentRole === 'staff')>Staff</option>
+                            <option value="tenant" @selected($currentRole === 'tenant')>Tenant</option>
+                          </select>
+                          <button type="submit" class="btn btn-secondary btn-sm" style="padding: 3px 6px; font-size: 11px;" title="Terapkan peran">
+                            Ubah
+                          </button>
+                        </form>
+
+                        <form method="POST" action="{{ route('users.reset-password', $u) }}" onsubmit="return confirm('Reset kata sandi akun {{ $u->name }} ke default (password123)?')">
+                          @csrf
+                          @method('PUT')
+                          <button type="submit" class="btn btn-sm" style="padding: 3px 7px; font-size: 11px; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;" title="Reset kata sandi ke: password123">
+                            Reset Sandi
+                          </button>
+                        </form>
+                      </div>
                     </td>
                   @endif
                 </tr>

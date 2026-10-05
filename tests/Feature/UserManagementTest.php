@@ -101,4 +101,37 @@ class UserManagementTest extends TestCase
         $this->assertTrue($roleUsers->contains('name', 'Admin Utama'));
         $this->assertFalse($roleUsers->contains('name', 'Anak Kos'));
     }
+
+    public function test_admin_can_reset_user_password_to_default(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $user = User::factory()->create([
+            'password' => \Illuminate\Support\Facades\Hash::make('oldpassword'),
+        ]);
+
+        $response = $this->actingAs($admin)->put(route('users.reset-password', $user));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('password123', $user->fresh()->password));
+    }
+
+    public function test_admin_can_manually_verify_user_email(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $user = User::factory()->create([
+            'email_verified_at' => null,
+        ]);
+        $this->assertFalse($user->hasVerifiedEmail());
+
+        $response = $this->actingAs($admin)->put(route('users.verify-email', $user));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertTrue($user->fresh()->hasVerifiedEmail());
+    }
 }

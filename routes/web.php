@@ -92,6 +92,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/settings/password', [SettingController::class, 'updatePassword'])->name('settings.password');
         Route::put('/settings/kos', [SettingController::class, 'updateKosInfo'])->name('settings.kos');
         Route::put('/users/{user}/role', [UserController::class, 'updateRole'])->name('users.role');
+        Route::put('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
+        Route::put('/users/{user}/verify-email', [UserController::class, 'verifyEmail'])->name('users.verify-email');
         Route::put('/settings/users/{user}/role', [UserController::class, 'updateRole'])->name('settings.users.role');
     });
 
