@@ -86,4 +86,15 @@ class EmailVerificationTest extends TestCase
             \Illuminate\Auth\Notifications\VerifyEmail::class
         );
     }
+
+    public function test_admin_can_access_dashboard_without_manual_email_verification(): void
+    {
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $admin = User::factory()->unverified()->create(['email' => 'admin@gmail.com']);
+        $admin->assignRole('admin');
+
+        $response = $this->actingAs($admin)->get('/dashboard');
+
+        $response->assertStatus(200);
+    }
 }

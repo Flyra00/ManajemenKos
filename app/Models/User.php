@@ -39,6 +39,27 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
     ];
 
+    /**
+     * Determine if the user has verified their email address.
+     * Admin, Owner, and Staff bypass verification (only public tenant registrations require verification).
+     */
+    public function hasVerifiedEmail(): bool
+    {
+        if (in_array($this->email, ['admin@gmail.com', 'owner@gmail.com', 'staff@gmail.com'])) {
+            return true;
+        }
+
+        try {
+            if ($this->hasAnyRole(['admin', 'owner', 'staff'])) {
+                return true;
+            }
+        } catch (\Throwable $e) {
+            // Ignore if roles not loaded or migration in progress
+        }
+
+        return ! is_null($this->email_verified_at);
+    }
+
 
 
     public function tenant()
