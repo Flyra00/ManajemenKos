@@ -143,11 +143,9 @@
             <!-- Foto Kamar -->
             <div style="position: relative; height: 190px; background: var(--color-neutral-100); overflow: hidden;">
               @if($room->image)
-                <img src="{{ asset('storage/' . $room->image) }}" alt="Foto Kamar {{ $room->room_number }}" style="width: 100%; height: 100%; object-fit: cover;">
+                <img src="{{ asset('storage/' . $room->image) }}" alt="Foto Kamar {{ $room->room_number }}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80';" style="width: 100%; height: 100%; object-fit: cover;">
               @else
-                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--color-neutral-400);">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                </div>
+                <img src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80" alt="Foto Kamar {{ $room->room_number }}" style="width: 100%; height: 100%; object-fit: cover;">
               @endif
               <span class="tag tag-accent" style="position: absolute; top: 12px; right: 12px; font-weight: 700;">
                 Tersedia

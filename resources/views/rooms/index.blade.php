@@ -128,7 +128,7 @@
                   <td>
                     @if($room->image)
                       <div class="room-thumb">
-                        <img src="{{ asset('storage/' . $room->image) }}" alt="Foto kamar {{ $room->room_number }}" loading="lazy" class="w-32 h-32 object-cover rounded-lg">
+                        <img src="{{ asset('storage/' . $room->image) }}" alt="Foto kamar {{ $room->room_number }}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80';" loading="lazy" class="w-32 h-32 object-cover rounded-lg">
                       </div>
                     @else
                       <div class="room-thumb room-thumb-empty" title="Belum ada foto — tambahkan lewat Edit">

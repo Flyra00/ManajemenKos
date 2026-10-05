@@ -107,7 +107,7 @@
         <div style="display: flex; gap: 20px; align-items: center; flex: 1; min-width: 280px;">
           <div style="width: 110px; height: 88px; border-radius: 8px; overflow: hidden; background: var(--color-neutral-100); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
             @if($activeLease && $activeLease->room && $activeLease->room->image)
-              <img src="{{ asset('storage/' . $activeLease->room->image) }}" alt="Kamar {{ $activeLease->room->room_number }}" style="width: 100%; height: 100%; object-fit: cover;">
+              <img src="{{ asset('storage/' . $activeLease->room->image) }}" alt="Kamar {{ $activeLease->room->room_number }}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80';" style="width: 100%; height: 100%; object-fit: cover;">
             @else
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--color-neutral-400);"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-8h6v8"/></svg>
             @endif

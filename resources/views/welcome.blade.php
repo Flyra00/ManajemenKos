@@ -267,7 +267,7 @@
             <div class="card elev-md" style="background: #ffffff; border: 1px solid var(--color-divider); border-radius: 8px; overflow: hidden; padding: 0;">
               <div style="height: 160px; background: linear-gradient(135deg, var(--color-neutral-800), var(--color-neutral-900)); position: relative; display: flex; align-items: center; justify-content: center; color: #ffffff;">
                 @if($featuredRoom->image)
-                  <img src="{{ asset('storage/' . $featuredRoom->image) }}" alt="Kamar {{ $featuredRoom->room_number }}" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;">
+                  <img src="{{ asset('storage/' . $featuredRoom->image) }}" alt="Kamar {{ $featuredRoom->room_number }}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1000&q=80';" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;">
                   <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.35);"></div>
                 @endif
                 <div style="text-align: center; padding: 16px; position: relative; z-index: 2;">
@@ -371,11 +371,9 @@
               <!-- Foto Kamar -->
               <div style="height: 190px; width: 100%; position: relative; background: var(--color-neutral-200); overflow: hidden;">
                 @if($room->image)
-                  <img src="{{ asset('storage/' . $room->image) }}" alt="Kamar {{ $room->room_number }}" style="width: 100%; height: 100%; object-fit: cover;">
+                  <img src="{{ asset('storage/' . $room->image) }}" alt="Kamar {{ $room->room_number }}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80';" style="width: 100%; height: 100%; object-fit: cover;">
                 @else
-                  <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--color-neutral-400);">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  </div>
+                  <img src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80" alt="Kamar {{ $room->room_number }}" style="width: 100%; height: 100%; object-fit: cover;">
                 @endif
                 <span class="tag tag-accent" style="position: absolute; top: 12px; right: 12px; font-weight: 700;">
                   Tersedia

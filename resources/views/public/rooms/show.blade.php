@@ -108,12 +108,9 @@
           <div class="card elev-sm" style="padding: 0; overflow: hidden; margin-bottom: 24px; border: 1px solid var(--color-divider);">
             <div style="height: 340px; background: var(--color-neutral-100); position: relative;">
               @if($room->image)
-                <img src="{{ asset('storage/' . $room->image) }}" alt="Foto Kamar {{ $room->room_number }}" style="width: 100%; height: 100%; object-fit: cover;">
+                <img src="{{ asset('storage/' . $room->image) }}" alt="Foto Kamar {{ $room->room_number }}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1000&q=80';" style="width: 100%; height: 100%; object-fit: cover;">
               @else
-                <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--color-neutral-400);">
-                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  <span class="small muted" style="margin-top: 8px;">Belum ada foto kamar</span>
-                </div>
+                <img src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1000&q=80" alt="Foto Kamar {{ $room->room_number }}" style="width: 100%; height: 100%; object-fit: cover;">
               @endif
               <span class="tag tag-accent" style="position: absolute; top: 16px; right: 16px; font-weight: 700; font-size: 13px;">
                 Tersedia untuk Disewa
