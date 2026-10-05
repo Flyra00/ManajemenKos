@@ -74,6 +74,24 @@
       padding: 26px 20px;
       text-align: center;
       position: relative;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .step-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    }
+    .step-card h3 {
+      color: var(--color-neutral-900) !important;
+      font-size: 17px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .step-card p {
+      color: var(--color-neutral-600) !important;
+      font-size: 14px;
+      line-height: 1.6;
+      margin: 0;
     }
     .step-number {
       width: 40px;
@@ -528,24 +546,24 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6" style="margin-top: 36px;">
           <div class="step-card">
             <div class="step-number">1</div>
-            <h3 style="font-size: 17px; font-weight: 800; margin-bottom: 6px;">Pilih Kamar</h3>
-            <p class="small muted" style="margin: 0; line-height: 1.6;">
+            <h3 style="font-size: 17px; font-weight: 800; margin-bottom: 6px; color: var(--color-neutral-900);">Pilih Kamar</h3>
+            <p class="small muted" style="margin: 0; line-height: 1.6; color: var(--color-neutral-600);">
               Pilih nomor kamar kosong yang sesuai dengan selera lantai dan budget bulanan Anda di daftar kamar.
             </p>
           </div>
 
           <div class="step-card">
             <div class="step-number">2</div>
-            <h3 style="font-size: 17px; font-weight: 800; margin-bottom: 6px;">Isi Data &amp; Booking</h3>
-            <p class="small muted" style="margin: 0; line-height: 1.6;">
+            <h3 style="font-size: 17px; font-weight: 800; margin-bottom: 6px; color: var(--color-neutral-900);">Isi Data &amp; Booking</h3>
+            <p class="small muted" style="margin: 0; line-height: 1.6; color: var(--color-neutral-600);">
               Lengkapi formulir online (nama, nomor WA, NIK, dan tanggal mulai sewa) hanya dalam waktu 2 menit.
             </p>
           </div>
 
           <div class="step-card">
             <div class="step-number">3</div>
-            <h3 style="font-size: 17px; font-weight: 800; margin-bottom: 6px;">Bayar &amp; Check-In</h3>
-            <p class="small muted" style="margin: 0; line-height: 1.6;">
+            <h3 style="font-size: 17px; font-weight: 800; margin-bottom: 6px; color: var(--color-neutral-900);">Bayar &amp; Check-In</h3>
+            <p class="small muted" style="margin: 0; line-height: 1.6; color: var(--color-neutral-600);">
               Dapatkan invoice resmi, konfirmasi pembayaran, dan ambil kunci kamar Anda. Selamat menikmati hunian baru!
             </p>
           </div>

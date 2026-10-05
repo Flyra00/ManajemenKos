@@ -1327,7 +1327,7 @@ body.public-page.nav-open { overflow: hidden; }
   gap: var(--space-lg);
   counter-reset: step;
 }
-.public-page .step-card {
+.public-page .steps .step-card {
   position: relative;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: var(--radius-lg);
@@ -1335,8 +1335,8 @@ body.public-page.nav-open { overflow: hidden; }
   background-color: rgba(255, 255, 255, 0.04);
   transition: background-color var(--t-base), transform var(--t-base);
 }
-.public-page .step-card:hover { background-color: rgba(255, 255, 255, 0.08); transform: translateY(-3px); }
-.public-page .step-num {
+.public-page .steps .step-card:hover { background-color: rgba(255, 255, 255, 0.08); transform: translateY(-3px); }
+.public-page .steps .step-num {
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: 40px;
@@ -1345,8 +1345,8 @@ body.public-page.nav-open { overflow: hidden; }
   line-height: 1;
   margin-bottom: var(--space-md);
 }
-.public-page .step-card h3 { color: #FFFFFF; font-size: 17px; margin-bottom: var(--space-sm); }
-.public-page .step-card p { color: rgba(255, 255, 255, 0.65); font-size: 14px; margin-bottom: 0; }
+.public-page .steps .step-card h3 { color: #FFFFFF; font-size: 17px; margin-bottom: var(--space-sm); }
+.public-page .steps .step-card p { color: rgba(255, 255, 255, 0.65); font-size: 14px; margin-bottom: 0; }
 
 /* ------------------------------------------------------------
    10. DASHBOARD PREVIEW (mockup penuh)
