@@ -1976,15 +1976,19 @@ body.public-page.nav-open { overflow: hidden; }
   box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.10);
 }
 .public-page .input.is-valid { border-color: var(--color-success); }
+.public-page .input.is-invalid,
+.public-page .input.input-error {
+  border-color: var(--color-error, #e11d48) !important;
+}
 
 .public-page .field-error {
-  display: none;
+  display: block;
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-error);
-  margin: 0;
+  color: var(--color-error, #e11d48);
+  margin-top: 6px;
+  line-height: 1.4;
 }
-.public-page .field-error.show { display: block; }
 
 /* Field password dengan toggle */
 .public-page .pw-wrap { position: relative; }

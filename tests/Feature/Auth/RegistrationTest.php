@@ -23,10 +23,11 @@ class RegistrationTest extends TestCase
     public function test_new_users_can_register(): void
     {
         $response = $this->post('/register', [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'name'                  => 'Test User',
+            'email'                 => 'test@example.com',
+            'phone'                 => '081234567899',
+            'password'              => 'password123',
+            'password_confirmation' => 'password123',
         ]);
 
         $this->assertAuthenticated();
@@ -48,5 +49,37 @@ class RegistrationTest extends TestCase
             'email' => 'dafa@example.com',
             'phone' => '081234567890',
         ]);
+    }
+
+    public function test_registration_fails_when_email_already_exists(): void
+    {
+        \App\Models\User::factory()->create(['email' => 'existing@example.com']);
+
+        $response = $this->post('/register', [
+            'name'                  => 'New User',
+            'email'                 => 'existing@example.com',
+            'phone'                 => '081234567800',
+            'password'              => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $response->assertSessionHasErrors(['email']);
+        $this->assertGuest();
+    }
+
+    public function test_registration_fails_when_phone_already_exists(): void
+    {
+        \App\Models\User::factory()->create(['phone' => '081234567890']);
+
+        $response = $this->post('/register', [
+            'name'                  => 'Another User',
+            'email'                 => 'another@example.com',
+            'phone'                 => '081234567890',
+            'password'              => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $response->assertSessionHasErrors(['phone']);
+        $this->assertGuest();
     }
 }

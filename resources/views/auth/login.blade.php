@@ -124,6 +124,21 @@
             </div>
         @endif
 
+        <!-- Alert Error Validasi -->
+        @if ($errors->any())
+            <div style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 14px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; line-height: 1.5; display: flex; gap: 10px; align-items: flex-start;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color:#dc2626; margin-top:2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <div style="flex: 1;">
+                    <strong style="display:block; margin-bottom: 4px; font-weight: 700;">Gagal Masuk:</strong>
+                    <ul style="margin: 0; padding-left: 18px; font-size: 13px;">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        @endif
+
         <!-- ===================== LOGIN FORM ===================== -->
         <form
             id="loginForm"
@@ -146,7 +161,7 @@
 
 
                 <input
-                    class="input @error('email') input-error @enderror"
+                    class="input @error('email') is-invalid input-error @enderror"
                     type="email"
                     id="loginEmail"
                     name="email"
@@ -159,7 +174,7 @@
 
 
                 @error('email')
-                    <p class="field-error">
+                    <p class="field-error show">
                         {{ $message }}
                     </p>
                 @enderror
@@ -181,7 +196,7 @@
                 <div class="pw-wrap">
 
                     <input
-                        class="input @error('password') input-error @enderror"
+                        class="input @error('password') is-invalid input-error @enderror"
                         type="password"
                         id="loginPassword"
                         name="password"
@@ -247,7 +262,7 @@
 
 
                 @error('password')
-                    <p class="field-error">
+                    <p class="field-error show">
                         {{ $message }}
                     </p>
                 @enderror
@@ -392,3 +407,32 @@
     </div>
 
 </main>
+
+  </div><!-- /auth -->
+
+  <!-- Toast Root -->
+  <div id="toastRoot" aria-live="polite">
+    @if(session('success'))
+      <div class="toast ok" style="cursor:pointer;" onclick="this.remove()" title="Klik untuk menutup">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span>{{ session('success') }}</span>
+      </div>
+    @endif
+    @if(session('error'))
+      <div class="toast err" style="cursor:pointer;" onclick="this.remove()" title="Klik untuk menutup">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <span>{{ session('error') }}</span>
+      </div>
+    @endif
+    @if($errors->any())
+      @foreach($errors->all() as $error)
+        <div class="toast err" style="cursor:pointer;" onclick="this.remove()" title="Klik untuk menutup">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <span>{{ $error }}</span>
+        </div>
+      @endforeach
+    @endif
+  </div>
+
+</body>
+</html>
