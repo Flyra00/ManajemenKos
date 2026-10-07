@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#24272C"/>
+      <stop offset="100%" stop-color="#121316"/>
+    </linearGradient>
+    <linearGradient id="flyRed" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#B7131A"/>
+      <stop offset="100%" stop-color="#E52E38"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Base Squircle -->
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#bgGrad)"/>
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="4"/>
+
+  <!-- Stem (White) -->
+  <rect x="130" y="104" width="78" height="304" fill="#FFFFFF"/>
+
+  <!-- Lower Leg (White) -->
+  <polygon points="208,246 278,246 408,408 316,408 208,280" fill="#FFFFFF"/>
+
+  <!-- Upper Wing (Fly - KosFly Red) -->
+  <polygon points="208,246 312,104 400,104 278,246" fill="url(#flyRed)"/>
+</svg>

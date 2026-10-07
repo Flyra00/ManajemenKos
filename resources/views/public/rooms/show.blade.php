@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Detail Kamar {{ $room->room_number }} — KosFly</title>
   <meta name="description" content="Detail fasilitas dan pengajuan sewa kamar {{ $room->room_number }} di KosFly.">
+  @include('partials.favicons')
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="{{ asset('style.css') }}">

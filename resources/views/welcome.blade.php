@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ $kosSettings['name'] ?? 'KosFly Residence' }} — Sewa Kamar Kos Nyaman &amp; Modern</title>
   <meta name="description" content="Temukan dan sewa kamar kos impian Anda di {{ $kosSettings['name'] ?? 'KosFly Residence' }}. Fasilitas lengkap, kamar siap huni, AC, WiFi cepat, dan booking online mudah.">
+  @include('partials.favicons')
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">

@@ -7,6 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{{ $title ?? 'KosFly' }}</title>
+  @include('partials.favicons')
 
   <!-- Seluruh styling ada di style.css -->
     @vite(['resources/css/app.css',])

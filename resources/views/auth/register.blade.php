@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Buat Akun — KosFly</title>
   <meta name="description" content="Daftar akun KosFly untuk mulai mengelola kos Anda.">
+  @include('partials.favicons')
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   @vite(['resources/css/app.css', 'resources/js/app.js'])

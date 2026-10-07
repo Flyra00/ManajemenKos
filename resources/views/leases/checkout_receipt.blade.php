@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Berita Acara Check-Out & Pengembalian Deposit - #LS-{{ str_pad($lease->id, 4, '0', STR_PAD_LEFT) }}</title>
+  @include('partials.favicons')
   <style>
     :root {
       --primary: #0f172a;
