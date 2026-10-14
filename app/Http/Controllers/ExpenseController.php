@@ -115,7 +115,8 @@ class ExpenseController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Hapus catatan pengeluaran dari tampilan aktif (diarsipkan via SoftDeletes
+     * agar rekam jejak audit keuangan kos tetap terjaga dan tidak hilang mentah).
      */
     public function destroy(Expense $expense)
     {
@@ -123,7 +124,7 @@ class ExpenseController extends Controller
 
         return redirect()
             ->route('expenses.index')
-            ->with('success', 'Catatan pengeluaran berhasil dihapus');
+            ->with('success', 'Catatan pengeluaran berhasil dihapus dan diarsipkan ke riwayat audit.');
     }
 }
 

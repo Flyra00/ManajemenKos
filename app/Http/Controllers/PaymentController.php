@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Services\BillingService;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -109,7 +110,7 @@ class PaymentController extends Controller
 
         $proofPath = null;
         if ($request->hasFile('proof_img')) {
-            $proofPath = $request->file('proof_img')->store('payments/proofs', 'public');
+            $proofPath = $request->file('proof_img')->store('payments/proofs', 'local');
         }
 
         $paymentDate = $validated['payment_date'] ?? null;
@@ -189,10 +190,14 @@ class PaymentController extends Controller
         $proofPath = $payment->proof_img;
 
         if ($request->hasFile('proof_img')) {
-            if ($payment->proof_img && Storage::disk('public')->exists($payment->proof_img)) {
-                Storage::disk('public')->delete($payment->proof_img);
+            if ($payment->proof_img) {
+                if (Storage::disk('local')->exists($payment->proof_img)) {
+                    Storage::disk('local')->delete($payment->proof_img);
+                } elseif (Storage::disk('public')->exists($payment->proof_img)) {
+                    Storage::disk('public')->delete($payment->proof_img);
+                }
             }
-            $proofPath = $request->file('proof_img')->store('payments/proofs', 'public');
+            $proofPath = $request->file('proof_img')->store('payments/proofs', 'local');
         }
 
         $paymentDate = $validated['payment_date'] ?? $payment->payment_date;
@@ -204,6 +209,8 @@ class PaymentController extends Controller
         }
 
         $previousStatus = $payment->getOriginal('status');
+        $snapToken = ((float) $payment->amount !== (float) $validated['amount']) ? null : $payment->snap_token;
+
         $payment->update([
             'lease_id'       => $validated['lease_id'],
             'invoice_number' => $validated['invoice_number'],
@@ -214,6 +221,7 @@ class PaymentController extends Controller
             'payment_method' => $validated['payment_method'],
             'status'         => $validated['status'],
             'proof_img'      => $proofPath,
+            'snap_token'     => $snapToken,
             'verified_by'    => $verifiedBy,
             'notes'          => $validated['notes'] ?? null,
         ]);
@@ -234,8 +242,16 @@ class PaymentController extends Controller
      */
     public function destroy(Payment $payment)
     {
-        if ($payment->proof_img && Storage::disk('public')->exists($payment->proof_img)) {
-            Storage::disk('public')->delete($payment->proof_img);
+        if ($payment->status === 'paid') {
+            return back()->with('error', 'Tagihan yang sudah berstatus Lunas tidak dapat dihapus untuk menjaga integritas data kontrak dan pembukuan keuangan.');
+        }
+
+        if ($payment->proof_img) {
+            if (Storage::disk('local')->exists($payment->proof_img)) {
+                Storage::disk('local')->delete($payment->proof_img);
+            } elseif (Storage::disk('public')->exists($payment->proof_img)) {
+                Storage::disk('public')->delete($payment->proof_img);
+            }
         }
 
         $payment->delete();
@@ -250,15 +266,32 @@ class PaymentController extends Controller
      */
     public function verify(Payment $payment)
     {
-        $payment->update([
-            'status'       => 'paid',
-            'payment_date' => $payment->payment_date ?: now(),
-            'verified_by'  => auth()->id(),
-        ]);
+        // Kunci baris invoice dan cek ulang status di dalam transaksi.
+        // Ini membuat verifikasi IDEMPOTEN: klik dobel / request bersamaan tidak
+        // akan memperpanjang masa sewa dua kali atau menerbitkan invoice sisa dobel.
+        $synchronized = DB::transaction(function () use ($payment) {
+            $locked = Payment::whereKey($payment->id)->lockForUpdate()->first();
 
-        // Aktifkan/perpanjang kontrak + sinkronkan kamar & invoice sisa deposit
-        // lewat service terpusat (sumber kebenaran tunggal untuk semua kanal bayar).
-        $this->paymentService->synchronizeLeaseOnPaid($payment);
+            if (! $locked || $locked->status === 'paid') {
+                return false;
+            }
+
+            $locked->update([
+                'status'       => 'paid',
+                'payment_date' => $locked->payment_date ?: now(),
+                'verified_by'  => auth()->id(),
+            ]);
+
+            // Aktifkan/perpanjang kontrak + sinkronkan kamar & invoice sisa deposit
+            // lewat service terpusat (sumber kebenaran tunggal untuk semua kanal bayar).
+            $this->paymentService->synchronizeLeaseOnPaid($locked);
+
+            return true;
+        });
+
+        if (! $synchronized) {
+            return back()->with('info', "Invoice {$payment->invoice_number} sudah berstatus Lunas dan telah diverifikasi sebelumnya. Tidak ada perubahan masa sewa.");
+        }
 
         return back()->with('success', "Pembayaran invoice {$payment->invoice_number} berhasil diverifikasi Lunas! Kontrak aktif dan kamar resmi terisi.");
     }
@@ -301,11 +334,47 @@ class PaymentController extends Controller
      */
     public function receipt(Payment $payment, BillingService $billingService)
     {
+        // Batasi akses kuitansi hanya untuk penyewa pemilik kontrak terkait atau
+        // pengelola, agar ID invoice tidak bisa dienumerasi untuk membaca data orang lain.
+        $user = auth()->user();
+        $ownerId = $payment->lease?->tenant?->user_id;
+
+        if (! $user || ($ownerId !== $user->id && ! $user->hasAnyRole(['admin', 'owner', 'staff']))) {
+            abort(403, 'Anda tidak memiliki hak akses untuk melihat kuitansi ini.');
+        }
+
         $payment->loadMissing(['lease.tenant.user', 'lease.room', 'verifier']);
         $kosSettings = $billingService->getKosSettings();
         $terbilang = $billingService->terbilang((float) $payment->amount);
 
         return view('payments.receipt', compact('payment', 'kosSettings', 'terbilang'));
+    }
+
+    /**
+     * Tampilkan/streaming berkas bukti pembayaran secara aman dan terproteksi.
+     */
+    public function proof(Payment $payment)
+    {
+        $user = auth()->user();
+        $ownerId = $payment->lease?->tenant?->user_id;
+
+        if (! $user || ($ownerId !== $user->id && ! $user->hasAnyRole(['admin', 'owner', 'staff']))) {
+            abort(403, 'Anda tidak memiliki hak akses untuk melihat bukti transfer ini.');
+        }
+
+        if (! $payment->proof_img) {
+            abort(404, 'Bukti pembayaran belum diunggah.');
+        }
+
+        $disk = Storage::disk('local')->exists($payment->proof_img)
+            ? 'local'
+            : (Storage::disk('public')->exists($payment->proof_img) ? 'public' : null);
+
+        if (! $disk) {
+            abort(404, 'File bukti pembayaran tidak ditemukan.');
+        }
+
+        return Storage::disk($disk)->response($payment->proof_img);
     }
 }
 

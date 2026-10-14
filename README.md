@@ -384,6 +384,7 @@ Tambahkan service **MySQL** pada canvas proyek, lalu pastikan `DB_URL` pada serv
 
 ## Catatan
 
+- **IP klien & `trustProxies`.** Railway tidak menerbitkan rentang IP proxy yang stabil, jadi `bootstrap/app.php` tetap memakai `trustProxies(at: '*')` agar deteksi HTTPS benar. Karena itu, middleware `App\Http\Middleware\NormalizeClientIp` menjadikan header `X-Real-Ip` (yang ditimpa oleh edge Railway) sebagai sumber IP klien, supaya `X-Forwarded-For` yang bisa dipalsukan tidak melewati rate limit. Jangan menghapus middleware ini tanpa mengganti mekanismenya.
 - **Jangan pakai `migrate:fresh`** di Railway.
 - **Config as Code sudah diddeprekasi.** File `railway.json` / `railway.toml` berhenti dibaca **2026-12-01**. Jangan menambahkannya; penggantinya adalah Infrastructure as Code (`.railway/railway.ts`) lewat Railway CLI.
 - Butuh ekstensi PHP lain? Tambahkan ke `RAILPACK_PHP_EXTENSIONS`, bukan ke `Procfile`.

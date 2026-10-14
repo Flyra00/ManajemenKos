@@ -30,7 +30,10 @@ class BookingController extends Controller
         }
 
         // 2. Validasi input formulir
-        $targetUser = Auth::user() ?? User::where('email', $request->email)->first();
+        $targetUser = Auth::user();
+        if (! $targetUser && $request->filled('email') && filter_var($request->email, FILTER_VALIDATE_EMAIL)) {
+            $targetUser = User::where('email', $request->email)->first();
+        }
         $targetTenantId = $targetUser?->tenant?->id;
 
         $rules = [
@@ -112,6 +115,7 @@ class BookingController extends Controller
             }
 
             Auth::login($user);
+            $request->session()->regenerate();
         }
 
         if (!$user->hasRole('admin') && !$user->hasRole('owner') && !$user->hasRole('staff') && !$user->hasRole('tenant')) {

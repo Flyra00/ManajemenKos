@@ -16,6 +16,26 @@ use Illuminate\Validation\ValidationException;
 class LeaseController extends Controller
 {
     /**
+     * Batasi akses dokumen sewa (kontrak / berita acara check-out) hanya untuk
+     * pihak yang berhak: penyewa pemilik kontrak tersebut, atau pengelola
+     * (admin/owner/staff). Mencegah IDOR lewat enumerasi ID kontrak/kuitansi.
+     */
+    protected function authorizeLeaseDocumentAccess(Lease $lease): void
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        $isOwner = $lease->tenant?->user_id === $user->id;
+
+        if (! $isOwner && ! $user->hasAnyRole(['admin', 'owner', 'staff'])) {
+            abort(403, 'Anda tidak memiliki hak akses untuk melihat dokumen kontrak ini.');
+        }
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request, LeaseService $leaseService)
@@ -256,6 +276,8 @@ class LeaseController extends Controller
      */
     public function contract(Lease $lease, BillingService $billingService)
     {
+        $this->authorizeLeaseDocumentAccess($lease);
+
         $lease->loadMissing(['tenant.user', 'room.facilities']);
         $kosSettings = $billingService->getKosSettings();
         $monthlyTerbilang = $billingService->terbilang((float) $lease->m_price);
@@ -394,6 +416,8 @@ class LeaseController extends Controller
      */
     public function checkoutReceipt(Lease $lease, BillingService $billingService)
     {
+        $this->authorizeLeaseDocumentAccess($lease);
+
         $lease->loadMissing(['tenant.user', 'room.facilities']);
         $kosSettings = $billingService->getKosSettings();
         $refundTerbilang = $billingService->terbilang((float) $lease->deposit_refunded);

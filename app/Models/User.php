@@ -41,23 +41,28 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Determine if the user has verified their email address.
-     * Admin, Owner, and Staff bypass verification (only public tenant registrations require verification).
+     *
+     * Status diambil dari database: kolom `email_verified_at`, atau peran
+     * pengelola (admin/owner/staff) yang juga dibaca dari database (tabel peran
+     * Spatie). Akun pengelola tidak diwajibkan verifikasi email karena hanya
+     * registrasi penyewa publik yang memerlukannya.
+     *
+     * Daftar email hardcoded (admin@gmail.com/owner@gmail.com/staff@gmail.com)
+     * dihapus: itu backdoor yang membuat siapa pun yang mendaftar dengan alamat
+     * tersebut otomatis dianggap terverifikasi.
      */
     public function hasVerifiedEmail(): bool
     {
-        if (in_array($this->email, ['admin@gmail.com', 'owner@gmail.com', 'staff@gmail.com'])) {
+        if (! is_null($this->email_verified_at)) {
             return true;
         }
 
         try {
-            if ($this->hasAnyRole(['admin', 'owner', 'staff'])) {
-                return true;
-            }
+            return $this->hasAnyRole(['admin', 'owner', 'staff']);
         } catch (\Throwable $e) {
-            // Ignore if roles not loaded or migration in progress
+            // Abaikan bila peran belum termuat atau migrasi sedang berjalan.
+            return false;
         }
-
-        return ! is_null($this->email_verified_at);
     }
 
 

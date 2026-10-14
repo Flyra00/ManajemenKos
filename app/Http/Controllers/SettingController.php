@@ -80,19 +80,4 @@ class SettingController extends Controller
 
         return back()->with('success', 'Informasi dan lokasi kos berhasil diperbarui.');
     }
-
-    /**
-     * Ubah peran pengguna (Spatie Role).
-     */
-    public function updateUserRole(Request $request, User $user)
-    {
-        $validated = $request->validate([
-            'role' => ['required', 'string', 'in:admin,owner,staff,tenant'],
-        ]);
-
-        $user->syncRoles([$validated['role']]);
-
-        return back()->with('success', "Peran pengguna {$user->name} berhasil diubah menjadi {$validated['role']}.");
-    }
-
 }

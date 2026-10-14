@@ -275,7 +275,7 @@ class TenantBookingTest extends TestCase
         $payment->refresh();
         $this->assertEquals('pending', $payment->status);
         $this->assertNotNull($payment->proof_img);
-        Storage::disk('public')->assertExists($payment->proof_img);
+        Storage::disk('local')->assertExists($payment->proof_img);
     }
 
     public function test_tenant_can_pay_using_qris(): void

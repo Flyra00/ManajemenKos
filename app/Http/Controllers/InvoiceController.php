@@ -55,11 +55,16 @@ class InvoiceController extends Controller
             'proof_image'    => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:4096'],
         ]);
 
-        if ($payment->proof_image && Storage::disk('public')->exists($payment->proof_image)) {
-            Storage::disk('public')->delete($payment->proof_image);
+        $existingProof = $payment->proof_img ?? $payment->proof_image;
+        if ($existingProof) {
+            if (Storage::disk('local')->exists($existingProof)) {
+                Storage::disk('local')->delete($existingProof);
+            } elseif (Storage::disk('public')->exists($existingProof)) {
+                Storage::disk('public')->delete($existingProof);
+            }
         }
 
-        $proofPath = $request->file('proof_image')->store('payment_proofs', 'public');
+        $proofPath = $request->file('proof_image')->store('payment_proofs', 'local');
 
         $payment->update([
             'payment_method' => $validated['payment_method'],

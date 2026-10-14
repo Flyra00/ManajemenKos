@@ -22,7 +22,15 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Railway/hosting meneruskan request lewat proxy HTTPS. Tanpa ini Laravel
         // mengira request-nya http:// sehingga link CSS/JS & invoice jadi http://.
+        //
+        // Rentang IP proxy Railway tidak stabil (tidak dipublikasikan sebagai
+        // kontrak), jadi proxy dipercaya untuk deteksi skema/host. Karena semua
+        // proxy dipercaya, Laravel membaca IP klien dari X-Forwarded-For yang
+        // bisa dipalsukan. NormalizeClientIp (dijalankan lebih awal) mengambil
+        // IP dari X-Real-Ip yang dijamin ditimpa oleh edge, sehingga throttle
+        // tidak bisa dilewati lewat header tersebut.
         $middleware->trustProxies(at: '*');
+        $middleware->prepend(\App\Http\Middleware\NormalizeClientIp::class);
     })
 
     ->withExceptions(function (Exceptions $exceptions): void {

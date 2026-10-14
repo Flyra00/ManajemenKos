@@ -116,6 +116,55 @@ class DatabaseSynchronizationTest extends TestCase
         $this->assertStringContainsString('Perbaikan Pipa Bocor', $expense->title);
     }
 
+    public function test_paying_deposit_settlement_invoice_does_not_extend_lease(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $room = Room::create([
+            'room_number' => 'SYNC-02',
+            'floor'       => '1',
+            'price'       => 1000000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $this->post(route('public.rooms.book', $room), [
+            'name'            => 'Penyewa Deposit Dua',
+            'email'           => 'deposit2@test.com',
+            'phone'           => '081234567802',
+            'ktp_number'      => '3201012345670088',
+            'password'        => 'password123',
+            'start_date'      => now()->addDays(2)->toDateString(),
+            'duration_months' => 1,
+            'payment_type'    => 'deposit_50',
+        ])->assertSessionHasNoErrors();
+
+        $lease = Lease::where('room_id', $room->id)->first();
+        $this->assertNotNull($lease);
+        $originalEnd = $lease->end_date->toDateString();
+
+        // Bayar uang muka 50% -> kontrak aktif + invoice sisa terbit
+        $depositInvoice = Payment::where('lease_id', $lease->id)->first();
+        $this->actingAs($admin)->put(route('payments.verify', $depositInvoice))->assertSessionHas('success');
+
+        $this->assertSame($originalEnd, $lease->fresh()->end_date->toDateString(), 'Uang muka tidak boleh mengubah masa aktif');
+
+        $remaining = Payment::where('lease_id', $lease->id)
+            ->where('id', '!=', $depositInvoice->id)
+            ->first();
+
+        $this->assertNotNull($remaining, 'Invoice sisa harus terbit');
+        $this->assertTrue((bool) $remaining->is_settlement, 'Invoice sisa harus ditandai sebagai pelunasan');
+
+        // Pelunasan sisa menagih PERIODE YANG SAMA -> masa aktif tidak boleh bertambah
+        $this->actingAs($admin)->put(route('payments.verify', $remaining))->assertSessionHas('success');
+
+        $lease->refresh();
+        $this->assertSame($originalEnd, $lease->end_date->toDateString(), 'Pelunasan sisa tidak boleh memperpanjang masa aktif');
+        $this->assertEquals(0, (int) $lease->renewal_count, 'Pelunasan sisa tidak dihitung sebagai perpanjangan');
+    }
+
     public function test_overdue_payments_are_automatically_synchronized(): void
     {
         $admin = User::factory()->create();

@@ -25,6 +25,7 @@ class PaymentService
      * Efek:
      *  - Kontrak pending -> diaktifkan (masa aktif awal sudah ditetapkan saat booking).
      *  - Kontrak aktif   -> diperpanjang +30 hari + renewal_count/last_renewed_at.
+     *  - Invoice pelunasan (is_settlement) -> TIDAK memperpanjang masa aktif.
      *  - Kamar           -> ditandai 'occupied'.
      *  - Bila kontrak memakai deposit, sisa tagihan sewa otomatis diterbitkan.
      */
@@ -43,8 +44,8 @@ class PaymentService
         if ($lease->status === 'pending') {
             // Aktivasi pertama: masa aktif awal sudah dihitung sejak booking.
             $lease->update(['status' => 'active']);
-        } else {
-            // Pembayaran sewa berjalan / pelunasan: tambah masa aktif +30 hari.
+        } elseif (! $payment->is_settlement) {
+            // Pembayaran sewa bulanan berjalan: tambah masa aktif +30 hari.
             $currentEnd = Carbon::parse($lease->end_date ?: now());
             $baseDate = $currentEnd->isPast() ? now() : $currentEnd;
 
@@ -55,6 +56,8 @@ class PaymentService
                 'last_renewed_at' => now(),
             ]);
         }
+        // Invoice pelunasan (is_settlement) menagih PERIODE SEWA YANG SAMA, jadi
+        // masa aktif & penghitung perpanjangan sengaja tidak diubah.
 
         $this->issueRemainingDepositInvoice($payment, $lease);
     }
@@ -93,6 +96,7 @@ class PaymentService
                 : now()->addDays(7)->toDateString(),
             'payment_method' => 'bank_tf',
             'status'         => 'unpaid',
+            'is_settlement'  => true,
             'notes'          => "Tagihan Pelunasan Sewa (Sisa setelah Uang Muka Rp "
                 . number_format($payment->amount, 0, ',', '.') . ") Kamar "
                 . ($lease->room->room_number ?? '—') . ".",

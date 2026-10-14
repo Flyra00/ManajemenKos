@@ -232,7 +232,7 @@ class ExpenseTest extends TestCase
         $response->assertRedirect(route('expenses.index'));
         $response->assertSessionHas('success');
 
-        $this->assertDatabaseMissing('expenses', [
+        $this->assertSoftDeleted('expenses', [
             'id' => $expense->id,
         ]);
     }

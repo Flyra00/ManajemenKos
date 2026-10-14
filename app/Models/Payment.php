@@ -18,6 +18,7 @@ class Payment extends Model
         'payment_date',
         'payment_method',
         'status',
+        'is_settlement',
         'proof_img',
         'snap_token',
         'midtrans_response',
@@ -30,6 +31,7 @@ class Payment extends Model
         'due_date' => 'date',
         'payment_date' => 'datetime',
         'midtrans_response' => 'array',
+        'is_settlement' => 'boolean',
     ];
 
     public function lease()

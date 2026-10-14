@@ -22,7 +22,12 @@ class BillingAutomationTest extends TestCase
         $this->seed(RoleSeeder::class);
     }
 
-    private function createActiveLeaseFixture(float $monthlyPrice = 1500000, string $phone = '081234567890'): array
+    /**
+     * @param  string|null  $endDate  Akhir masa aktif ("paid through"). Default:
+     *                                berakhir hampir di ujung bulan berjalan, sehingga
+     *                                bulan berjalan belum tertutup penuh dan tetap ditagih.
+     */
+    private function createActiveLeaseFixture(float $monthlyPrice = 1500000, string $phone = '081234567890', ?string $endDate = null): array
     {
         $tenantUser = User::factory()->create([
             'name'  => 'Agus Prasetyo',
@@ -46,7 +51,7 @@ class BillingAutomationTest extends TestCase
             'tenant_id'      => $tenant->id,
             'room_id'        => $room->id,
             'start_date'     => now()->startOfMonth()->toDateString(),
-            'end_date'       => now()->addMonths(6)->toDateString(),
+            'end_date'       => $endDate ?? now()->endOfMonth()->subDay()->toDateString(),
             'm_price'        => $monthlyPrice,
             'deposit_amount' => 500000,
             'status'         => 'active',
@@ -57,7 +62,13 @@ class BillingAutomationTest extends TestCase
 
     public function test_billing_service_generates_monthly_bills_for_active_leases(): void
     {
-        [$tenantUser, $tenant, $room, $lease] = $this->createActiveLeaseFixture(1750000);
+        // Masa aktif berakhir di bulan depan (belum menutup penuh bulan itu),
+        // sehingga tagihan untuk bulan depan memang harus diterbitkan.
+        [$tenantUser, $tenant, $room, $lease] = $this->createActiveLeaseFixture(
+            1750000,
+            '081234567890',
+            now()->addMonth()->endOfMonth()->subDay()->toDateString()
+        );
 
         $service = app(BillingService::class);
         $nextMonth = now()->addMonth();
@@ -139,6 +150,34 @@ class BillingAutomationTest extends TestCase
         $response->assertSessionHas('success');
 
         $this->assertDatabaseCount('payments', 1);
+    }
+
+    public function test_prepaid_multimonth_lease_is_not_billed_again(): void
+    {
+        // Kontrak 3 bulan yang sudah dibayar lunas di muka: masa aktifnya jauh
+        // ke depan, jadi generator bulanan TIDAK boleh menerbitkan tagihan baru.
+        [$tenantUser, $tenant, $room, $lease] = $this->createActiveLeaseFixture(
+            1000000,
+            '081234567890',
+            now()->addMonths(3)->toDateString()
+        );
+
+        Payment::create([
+            'lease_id'       => $lease->id,
+            'invoice_number' => 'INV-PREPAID-3MO',
+            'amount'         => 3000000,
+            'billing_period' => now()->startOfMonth()->toDateString(),
+            'due_date'       => now()->addDay()->toDateString(),
+            'payment_method' => 'bank_tf',
+            'status'         => 'paid',
+            'payment_date'   => now(),
+        ]);
+
+        $result = app(BillingService::class)->generateMonthlyBills();
+
+        $this->assertEquals(0, $result['generated']);
+        $this->assertEquals(1, $result['skipped']);
+        $this->assertEquals(1, Payment::where('lease_id', $lease->id)->count());
     }
 
     public function test_whatsapp_reminder_url_formatting(): void

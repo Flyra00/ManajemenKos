@@ -4,7 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -102,20 +105,73 @@ class UserManagementTest extends TestCase
         $this->assertFalse($roleUsers->contains('name', 'Anak Kos'));
     }
 
-    public function test_admin_can_reset_user_password_to_default(): void
+    public function test_admin_cannot_change_own_role(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
 
-        $user = User::factory()->create([
-            'password' => \Illuminate\Support\Facades\Hash::make('oldpassword'),
+        $response = $this->actingAs($admin)->put(route('users.role', $admin), [
+            'role' => 'tenant',
         ]);
+
+        $response->assertSessionHas('error');
+        $this->assertTrue($admin->fresh()->hasRole('admin'));
+    }
+
+    public function test_admin_cannot_change_owner_role(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $owner = User::factory()->create();
+        $owner->assignRole('owner');
+
+        $response = $this->actingAs($admin)->put(route('users.role', $owner), [
+            'role' => 'tenant',
+        ]);
+
+        $response->assertSessionHas('error');
+        $this->assertTrue($owner->fresh()->hasRole('owner'));
+    }
+
+    public function test_staff_cannot_change_user_role(): void
+    {
+        $staff = User::factory()->create();
+        $staff->assignRole('staff');
+
+        $target = User::factory()->create();
+        $target->assignRole('tenant');
+
+        $this->actingAs($staff)
+            ->put(route('users.role', $target), ['role' => 'admin'])
+            ->assertForbidden();
+
+        $this->assertTrue($target->fresh()->hasRole('tenant'));
+    }
+
+    public function test_admin_reset_password_sends_reset_link_without_changing_password(): void
+    {
+        Notification::fake();
+
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $user = User::factory()->create([
+            'password' => Hash::make('oldpassword'),
+        ]);
+        $user->assignRole('tenant');
 
         $response = $this->actingAs($admin)->put(route('users.reset-password', $user));
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('password123', $user->fresh()->password));
+
+        // Kata sandi lama tidak diubah, dan kata sandi default lama tidak dipakai lagi
+        $this->assertTrue(Hash::check('oldpassword', $user->fresh()->password));
+        $this->assertFalse(Hash::check('password123', $user->fresh()->password));
+
+        // Tautan atur-ulang dikirim ke email pemilik akun
+        Notification::assertSentTo($user, ResetPassword::class);
     }
 
     public function test_admin_can_manually_verify_user_email(): void

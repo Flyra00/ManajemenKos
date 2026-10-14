@@ -47,7 +47,7 @@ class RoomController extends Controller
             'kosong'      => Room::where('status', 'available')->count(),
             'terisi'      => Room::where('status', 'occupied')->count(),
             'perbaikan'   => Room::where('status', 'maintenance')->count(),
-            'total_floor' => Room::distinct('floor')->whereNotNull('floor')->count('floor') ?: 1,
+            'total_floor' => Room::whereNotNull('floor')->distinct()->count('floor') ?: 1,
         ];
 
         return view('rooms.index', compact('rooms', 'stats'));

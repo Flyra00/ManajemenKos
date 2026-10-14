@@ -64,6 +64,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/leases/{lease}/checkout-receipt', [LeaseController::class, 'checkoutReceipt'])->name('leases.checkout-receipt');
     Route::post('/leases/{lease}/request-bill', [LeaseController::class, 'requestBill'])->name('tenant.leases.request-bill');
 
+    // Berkas Lampiran Privat Terproteksi (Bukti Bayar & Foto Maintenance)
+    Route::get('/payments/{payment}/proof', [PaymentController::class, 'proof'])->name('payments.proof');
+    Route::get('/maintenance/{maintenance}/image', [MaintenanceController::class, 'image'])->name('maintenance.image');
+    Route::get('/maintenance/{maintenance}/completion-image', [MaintenanceController::class, 'completionImage'])->name('maintenance.completion-image');
+
     // Modul Maintenance: Akses CRUD (scoping otorisasi dikendalikan di MaintenanceController)
     Route::resource('maintenance', MaintenanceController::class);
     Route::put('/maintenance/{maintenance}/status', [MaintenanceController::class, 'updateStatus'])

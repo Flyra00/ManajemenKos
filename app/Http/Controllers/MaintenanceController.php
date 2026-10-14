@@ -208,7 +208,7 @@ class MaintenanceController extends Controller
 
             $imagePath = null;
             if ($request->hasFile('image_path')) {
-                $imagePath = $request->file('image_path')->store('maintenance', 'public');
+                $imagePath = $request->file('image_path')->store('maintenance', 'local');
             }
 
             MaintenanceRequest::create([
@@ -246,7 +246,7 @@ class MaintenanceController extends Controller
 
         $imagePath = null;
         if ($request->hasFile('image_path')) {
-            $imagePath = $request->file('image_path')->store('maintenance', 'public');
+            $imagePath = $request->file('image_path')->store('maintenance', 'local');
         }
 
         $reportedAt = $validated['reported_at'] ?? now();
@@ -348,6 +348,10 @@ class MaintenanceController extends Controller
                     ->with('error', 'Laporan yang sedang diproses atau telah selesai tidak dapat diubah.');
             }
 
+            $tenant = $user->tenant;
+            $allowedRoomIds = $tenant ? $tenant->leases()->whereIn('status', ['active', 'pending'])->pluck('room_id') : collect();
+            $allowedRoomIds->push($maintenance->room_id);
+
             $validated = $request->validate([
                 'title'       => ['required', 'string', 'max:255'],
                 'room_id'     => ['required', 'exists:rooms,id'],
@@ -356,17 +360,29 @@ class MaintenanceController extends Controller
                 'image_path'  => ['nullable', 'image', 'max:2048'],
             ]);
 
+            if (!$allowedRoomIds->contains($validated['room_id'])) {
+                return back()->withInput()->withErrors(['room_id' => 'Anda hanya dapat melaporkan keluhan untuk kamar yang Anda sewa.']);
+            }
+
             $imagePath = $maintenance->image_path;
             if ($request->boolean('remove_image')) {
-                if ($maintenance->image_path && Storage::disk('public')->exists($maintenance->image_path)) {
-                    Storage::disk('public')->delete($maintenance->image_path);
+                if ($maintenance->image_path) {
+                    if (Storage::disk('local')->exists($maintenance->image_path)) {
+                        Storage::disk('local')->delete($maintenance->image_path);
+                    } elseif (Storage::disk('public')->exists($maintenance->image_path)) {
+                        Storage::disk('public')->delete($maintenance->image_path);
+                    }
                 }
                 $imagePath = null;
             } elseif ($request->hasFile('image_path')) {
-                if ($maintenance->image_path && Storage::disk('public')->exists($maintenance->image_path)) {
-                    Storage::disk('public')->delete($maintenance->image_path);
+                if ($maintenance->image_path) {
+                    if (Storage::disk('local')->exists($maintenance->image_path)) {
+                        Storage::disk('local')->delete($maintenance->image_path);
+                    } elseif (Storage::disk('public')->exists($maintenance->image_path)) {
+                        Storage::disk('public')->delete($maintenance->image_path);
+                    }
                 }
-                $imagePath = $request->file('image_path')->store('maintenance', 'public');
+                $imagePath = $request->file('image_path')->store('maintenance', 'local');
             }
 
             $maintenance->update([
@@ -403,15 +419,23 @@ class MaintenanceController extends Controller
         $imagePath = $maintenance->image_path;
 
         if ($request->boolean('remove_image')) {
-            if ($maintenance->image_path && Storage::disk('public')->exists($maintenance->image_path)) {
-                Storage::disk('public')->delete($maintenance->image_path);
+            if ($maintenance->image_path) {
+                if (Storage::disk('local')->exists($maintenance->image_path)) {
+                    Storage::disk('local')->delete($maintenance->image_path);
+                } elseif (Storage::disk('public')->exists($maintenance->image_path)) {
+                    Storage::disk('public')->delete($maintenance->image_path);
+                }
             }
             $imagePath = null;
         } elseif ($request->hasFile('image_path')) {
-            if ($maintenance->image_path && Storage::disk('public')->exists($maintenance->image_path)) {
-                Storage::disk('public')->delete($maintenance->image_path);
+            if ($maintenance->image_path) {
+                if (Storage::disk('local')->exists($maintenance->image_path)) {
+                    Storage::disk('local')->delete($maintenance->image_path);
+                } elseif (Storage::disk('public')->exists($maintenance->image_path)) {
+                    Storage::disk('public')->delete($maintenance->image_path);
+                }
             }
-            $imagePath = $request->file('image_path')->store('maintenance', 'public');
+            $imagePath = $request->file('image_path')->store('maintenance', 'local');
         }
 
         $resolvedAt = $validated['resolved_at'] ?? $maintenance->resolved_at;
@@ -476,12 +500,20 @@ class MaintenanceController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk menghapus laporan maintenance.');
         }
 
-        if ($maintenance->image_path && Storage::disk('public')->exists($maintenance->image_path)) {
-            Storage::disk('public')->delete($maintenance->image_path);
+        if ($maintenance->image_path) {
+            if (Storage::disk('local')->exists($maintenance->image_path)) {
+                Storage::disk('local')->delete($maintenance->image_path);
+            } elseif (Storage::disk('public')->exists($maintenance->image_path)) {
+                Storage::disk('public')->delete($maintenance->image_path);
+            }
         }
 
-        if ($maintenance->completion_image && Storage::disk('public')->exists($maintenance->completion_image)) {
-            Storage::disk('public')->delete($maintenance->completion_image);
+        if ($maintenance->completion_image) {
+            if (Storage::disk('local')->exists($maintenance->completion_image)) {
+                Storage::disk('local')->delete($maintenance->completion_image);
+            } elseif (Storage::disk('public')->exists($maintenance->completion_image)) {
+                Storage::disk('public')->delete($maintenance->completion_image);
+            }
         }
 
         Expense::where('description', "Otomatis dari Tiket Maintenance #{$maintenance->id}")->delete();
@@ -537,10 +569,14 @@ class MaintenanceController extends Controller
 
         $completionImage = $maintenance->completion_image;
         if ($request->hasFile('completion_image')) {
-            if ($maintenance->completion_image && Storage::disk('public')->exists($maintenance->completion_image)) {
-                Storage::disk('public')->delete($maintenance->completion_image);
+            if ($maintenance->completion_image) {
+                if (Storage::disk('local')->exists($maintenance->completion_image)) {
+                    Storage::disk('local')->delete($maintenance->completion_image);
+                } elseif (Storage::disk('public')->exists($maintenance->completion_image)) {
+                    Storage::disk('public')->delete($maintenance->completion_image);
+                }
             }
-            $completionImage = $request->file('completion_image')->store('maintenance', 'public');
+            $completionImage = $request->file('completion_image')->store('maintenance/completions', 'local');
         }
 
         $updateData = [
@@ -577,6 +613,60 @@ class MaintenanceController extends Controller
 
         return redirect()->route('maintenance.index')
             ->with('success', "Status laporan '{$maintenance->title}' berhasil diperbarui.");
+    }
+
+    /**
+     * Tampilkan/streaming berkas foto kerusakan maintenance secara terproteksi.
+     */
+    public function image(MaintenanceRequest $maintenance)
+    {
+        $user = auth()->user();
+        $isOwner = $maintenance->tenant?->user_id === $user?->id;
+
+        if (! $isOwner && ! $user?->hasAnyRole(['admin', 'owner', 'staff'])) {
+            abort(403, 'Anda tidak memiliki hak akses untuk melihat foto keluhan ini.');
+        }
+
+        if (! $maintenance->image_path) {
+            abort(404, 'Foto keluhan tidak ditemukan.');
+        }
+
+        $disk = Storage::disk('local')->exists($maintenance->image_path)
+            ? 'local'
+            : (Storage::disk('public')->exists($maintenance->image_path) ? 'public' : null);
+
+        if (! $disk) {
+            abort(404, 'File foto keluhan tidak ditemukan.');
+        }
+
+        return Storage::disk($disk)->response($maintenance->image_path);
+    }
+
+    /**
+     * Tampilkan/streaming berkas bukti penyelesaian perbaikan secara terproteksi.
+     */
+    public function completionImage(MaintenanceRequest $maintenance)
+    {
+        $user = auth()->user();
+        $isOwner = $maintenance->tenant?->user_id === $user?->id;
+
+        if (! $isOwner && ! $user?->hasAnyRole(['admin', 'owner', 'staff'])) {
+            abort(403, 'Anda tidak memiliki hak akses untuk melihat bukti perbaikan ini.');
+        }
+
+        if (! $maintenance->completion_image) {
+            abort(404, 'Foto bukti perbaikan tidak ditemukan.');
+        }
+
+        $disk = Storage::disk('local')->exists($maintenance->completion_image)
+            ? 'local'
+            : (Storage::disk('public')->exists($maintenance->completion_image) ? 'public' : null);
+
+        if (! $disk) {
+            abort(404, 'File bukti perbaikan tidak ditemukan.');
+        }
+
+        return Storage::disk($disk)->response($maintenance->completion_image);
     }
 }
 

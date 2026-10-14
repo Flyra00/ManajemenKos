@@ -117,7 +117,7 @@ class MaintenanceTest extends TestCase
 
     public function test_maintenance_can_be_stored_with_image_upload(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         [$tenant, $room, $technician] = $this->createFixture();
@@ -148,7 +148,7 @@ class MaintenanceTest extends TestCase
 
         $maint = MaintenanceRequest::where('title', 'Pipa Pembuangan Mampet')->first();
         $this->assertNotNull($maint->image_path);
-        Storage::disk('public')->assertExists($maint->image_path);
+        Storage::disk('local')->assertExists($maint->image_path);
     }
 
     public function test_maintenance_show_page_can_be_rendered(): void
@@ -284,9 +284,9 @@ class MaintenanceTest extends TestCase
 
     public function test_maintenance_image_can_be_removed_via_update(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $file = UploadedFile::fake()->image('kerusakan.jpg');
-        $storedPath = $file->store('maintenance', 'public');
+        $storedPath = $file->store('maintenance', 'local');
 
         $admin = User::factory()->create();
         $admin->assignRole('admin');
@@ -304,7 +304,7 @@ class MaintenanceTest extends TestCase
             'reported_at' => now(),
         ]);
 
-        $this->assertTrue(Storage::disk('public')->exists($storedPath));
+        $this->assertTrue(Storage::disk('local')->exists($storedPath));
 
         $response = $this->actingAs($admin)->put(route('maintenance.update', $maint), [
             'room_id'      => $room->id,
@@ -321,7 +321,7 @@ class MaintenanceTest extends TestCase
         $response->assertRedirect(route('maintenance.index'));
         $maint->refresh();
         $this->assertNull($maint->image_path);
-        $this->assertFalse(Storage::disk('public')->exists($storedPath));
+        $this->assertFalse(Storage::disk('local')->exists($storedPath));
     }
 
     public function test_admin_can_update_maintenance_status_via_quick_action(): void
@@ -404,7 +404,7 @@ class MaintenanceTest extends TestCase
 
     public function test_admin_can_complete_maintenance_with_cost_and_completion_image(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         [$tenant, $room, $technician] = $this->createFixture();
@@ -437,7 +437,7 @@ class MaintenanceTest extends TestCase
         $this->assertNotNull($maintenance->resolved_at);
         $this->assertNotNull($maintenance->completion_image);
 
-        Storage::disk('public')->assertExists($maintenance->completion_image);
+        Storage::disk('local')->assertExists($maintenance->completion_image);
 
         // Pastikan biaya tercatat di tabel expenses
         $this->assertDatabaseHas('expenses', [

@@ -82,13 +82,12 @@ class Lease extends Model
 
     public function getRemainingDueAttribute(): float
     {
-        // Jika ada deposit_amount yang tercatat, sisa tagihan sewa berkurang sebesar deposit
         if ($this->deposit_amount > 0) {
-            return (float) max(0, $this->m_price - $this->deposit_amount);
+            $totalRent = (float) $this->deposit_amount * 2;
+            return (float) max(0, $totalRent - $this->total_paid);
         }
 
-        $paid = $this->total_paid;
-        return (float) max(0, $this->m_price - $paid);
+        return (float) max(0, (float) $this->m_price - $this->total_paid);
     }
 
     public function getNetRefundAmountAttribute(): float

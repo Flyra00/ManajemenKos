@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Password;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -63,22 +64,41 @@ class UserController extends Controller
             'role' => ['required', 'string', 'in:admin,owner,staff,tenant'],
         ]);
 
-        $user->syncRoles([$validated['role']]);
+        $newRole = $validated['role'];
+        $actor = $request->user();
 
-        return back()->with('success', "Peran pengguna {$user->name} berhasil diperbarui menjadi " . strtoupper($validated['role']) . ".");
+        // Cegah admin mengubah peran akunnya sendiri (anti lockout / self-escalation).
+        if ($actor && $user->is($actor)) {
+            return back()->with('error', 'Anda tidak dapat mengubah peran akun Anda sendiri. Minta admin lain untuk melakukannya.');
+        }
+
+        // Lindungi akun Owner: peran tertinggi tidak boleh diubah dari panel admin.
+        if ($user->hasRole('owner') && $newRole !== 'owner') {
+            return back()->with('error', 'Peran akun Owner tidak dapat diubah dari panel admin.');
+        }
+
+        $user->syncRoles([$newRole]);
+
+        return back()->with('success', "Peran pengguna {$user->name} berhasil diperbarui menjadi " . strtoupper($newRole) . ".");
     }
 
     /**
-     * Reset kata sandi pengguna ke default (password123) oleh Admin.
+     * Kirim tautan atur-ulang kata sandi ke email pemilik akun.
+     *
+     * Sebelumnya endpoint ini menimpa kata sandi dengan nilai default yang bisa
+     * ditebak ('password123') lalu menampilkannya sebagai plaintext di flash
+     * message. Kedua hal itu kini dihapus: admin hanya memicu pengiriman tautan,
+     * dan hanya pemilik email yang dapat menetapkan kata sandi barunya sendiri.
      */
     public function resetPassword(User $user)
     {
-        $defaultPassword = 'password123';
-        $user->update([
-            'password' => \Illuminate\Support\Facades\Hash::make($defaultPassword),
-        ]);
+        $status = Password::sendResetLink(['email' => $user->email]);
 
-        return back()->with('success', "Kata sandi untuk {$user->name} ({$user->email}) berhasil direset menjadi: {$defaultPassword}");
+        if ($status !== Password::RESET_LINK_SENT) {
+            return back()->with('error', "Gagal mengirim tautan atur ulang kata sandi ke email {$user->email}. Pastikan alamat email valid dan coba lagi.");
+        }
+
+        return back()->with('success', "Tautan atur ulang kata sandi telah dikirim ke email {$user->email}. Penghuni menetapkan sendiri kata sandi barunya.");
     }
 
     /**

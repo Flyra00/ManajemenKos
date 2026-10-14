@@ -115,7 +115,7 @@ class PaymentTest extends TestCase
 
     public function test_payment_can_be_stored_with_proof_image(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $lease = $this->createLeaseFixture();
@@ -146,7 +146,7 @@ class PaymentTest extends TestCase
 
         $payment = Payment::where('invoice_number', 'INV-2026-0003')->first();
         $this->assertNotNull($payment->proof_img);
-        Storage::disk('public')->assertExists($payment->proof_img);
+        Storage::disk('local')->assertExists($payment->proof_img);
     }
 
     public function test_payment_invoice_number_must_be_unique(): void
@@ -285,6 +285,130 @@ class PaymentTest extends TestCase
         $this->assertEquals(now()->addDays(30)->toDateString(), $lease->end_date->toDateString());
     }
 
+    public function test_verifying_an_already_paid_invoice_does_not_extend_lease_again(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $tenantUser = User::factory()->create();
+        $tenant = Tenant::create([
+            'user_id'    => $tenantUser->id,
+            'ktp_number' => '3201776655443322',
+        ]);
+        $room = Room::create([
+            'room_number' => 'IDEMP-01',
+            'price'       => 1500000,
+            'status'      => 'occupied',
+        ]);
+
+        $initialEnd = now()->addDays(10)->startOfDay();
+        $lease = Lease::create([
+            'tenant_id'  => $tenant->id,
+            'room_id'    => $room->id,
+            'start_date' => now()->subDays(20)->toDateString(),
+            'end_date'   => $initialEnd->toDateString(),
+            'm_price'    => 1500000,
+            'status'     => 'active',
+        ]);
+
+        $payment = Payment::create([
+            'lease_id'       => $lease->id,
+            'invoice_number' => 'INV-IDEMP-001',
+            'amount'         => 1500000,
+            'billing_period' => now()->startOfMonth()->toDateString(),
+            'due_date'       => now()->addDays(5)->toDateString(),
+            'payment_method' => 'bank_tf',
+            'status'         => 'unpaid',
+        ]);
+
+        // Verifikasi pertama: masa aktif +30 hari, renewal_count = 1
+        $this->actingAs($admin)->put(route('payments.verify', $payment))->assertSessionHas('success');
+
+        $firstEnd = $initialEnd->copy()->addDays(30)->toDateString();
+        $this->assertSame($firstEnd, $lease->fresh()->end_date->toDateString());
+        $this->assertEquals(1, (int) $lease->fresh()->renewal_count);
+
+        // Verifikasi kedua (klik dobel / submit ulang) tidak boleh mengubah apa pun
+        $this->actingAs($admin)->put(route('payments.verify', $payment))->assertSessionHas('info');
+
+        $this->assertSame($firstEnd, $lease->fresh()->end_date->toDateString());
+        $this->assertEquals(1, (int) $lease->fresh()->renewal_count);
+    }
+
+    public function test_verifying_deposit_invoice_twice_does_not_create_second_remaining_invoice(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $tenantUser = User::factory()->create();
+        $tenant = Tenant::create([
+            'user_id'    => $tenantUser->id,
+            'ktp_number' => '3201887766554433',
+        ]);
+        $room = Room::create([
+            'room_number' => 'IDEMP-02',
+            'price'       => 1000000,
+            'status'      => 'available',
+        ]);
+
+        // Kontrak booking dengan uang muka 50% (Rp 500.000 dari total Rp 1.000.000)
+        $lease = Lease::create([
+            'tenant_id'      => $tenant->id,
+            'room_id'        => $room->id,
+            'start_date'     => now()->toDateString(),
+            'end_date'       => now()->addMonth()->toDateString(),
+            'm_price'        => 1000000,
+            'deposit_amount' => 500000,
+            'status'         => 'pending',
+        ]);
+
+        $depositInvoice = Payment::create([
+            'lease_id'       => $lease->id,
+            'invoice_number' => 'INV-IDEMP-DEP',
+            'amount'         => 500000,
+            'billing_period' => now()->startOfMonth()->toDateString(),
+            'due_date'       => now()->addDay()->toDateString(),
+            'payment_method' => 'bank_tf',
+            'status'         => 'unpaid',
+        ]);
+
+        $this->actingAs($admin)->put(route('payments.verify', $depositInvoice))->assertSessionHas('success');
+
+        // Invoice sisa (Rp 500.000) terbit tepat sekali
+        $this->assertSame(2, $lease->payments()->count());
+
+        // Verifikasi ulang tidak boleh menerbitkan invoice sisa kedua
+        $this->actingAs($admin)->put(route('payments.verify', $depositInvoice))->assertSessionHas('info');
+
+        $this->assertSame(2, $lease->payments()->count());
+        $this->assertSame('active', $lease->fresh()->status);
+    }
+
+    public function test_info_flash_is_rendered_as_toast(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+        $lease = $this->createLeaseFixture();
+
+        $payment = Payment::create([
+            'lease_id'       => $lease->id,
+            'invoice_number' => 'INV-INFO-0001',
+            'amount'         => 1500000,
+            'billing_period' => now()->startOfMonth()->toDateString(),
+            'due_date'       => now()->addDays(5)->toDateString(),
+            'payment_method' => 'bank_tf',
+            'status'         => 'paid',
+        ]);
+
+        // Halaman detail pembayaran memakai layout utama, yang kini merender
+        // flash 'info' sebagai toast (dipakai oleh guard verifikasi ganda).
+        $this->actingAs($admin)
+            ->withSession(['info' => 'Pesan uji info tampil'])
+            ->get(route('payments.show', $payment))
+            ->assertOk()
+            ->assertSee('Pesan uji info tampil');
+    }
+
     public function test_payment_can_be_deleted_safely(): void
     {
         $admin = User::factory()->create();
@@ -307,6 +431,24 @@ class PaymentTest extends TestCase
         $response->assertSessionHas('success');
 
         $this->assertDatabaseMissing('payments', ['id' => $payment->id]);
+    }
+
+    public function test_artisan_command_syncs_overdue_payments(): void
+    {
+        $lease = $this->createLeaseFixture();
+        $pastPayment = Payment::create([
+            'lease_id'       => $lease->id,
+            'invoice_number' => 'INV-CMD-OVD-01',
+            'amount'         => 1000000,
+            'billing_period' => now()->subMonth()->startOfMonth()->toDateString(),
+            'due_date'       => now()->subDays(5)->toDateString(),
+            'payment_method' => 'bank_tf',
+            'status'         => 'unpaid',
+        ]);
+
+        $this->artisan('kos:sync-overdue-payments')->assertExitCode(0);
+
+        $this->assertEquals('overdue', $pastPayment->fresh()->status);
     }
 }
 

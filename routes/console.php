@@ -12,3 +12,6 @@ Artisan::command('inspire', function () {
 
 // Tutup otomatis kontrak sewa yang masa aktifnya sudah berakhir & bebaskan kamarnya setiap hari
 \Illuminate\Support\Facades\Schedule::command('kos:expire-leases')->dailyAt('00:10');
+
+// Sinkronisasi otomatis tagihan yang melewati jatuh tempo menjadi overdue setiap hari
+\Illuminate\Support\Facades\Schedule::command('kos:sync-overdue-payments')->dailyAt('00:01');

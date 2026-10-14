@@ -143,8 +143,8 @@
           <div>
             @if($payment->proof_img)
               <div class="p-2 border border-neutral-200 rounded-lg text-center">
-                <a href="{{ asset('storage/' . $payment->proof_img) }}" target="_blank" title="Klik untuk memperbesar">
-                  <img src="{{ asset('storage/' . $payment->proof_img) }}" alt="Bukti transfer {{ $payment->invoice_number }}" class="max-h-80 mx-auto rounded object-contain">
+                <a href="{{ route('payments.proof', $payment) }}" target="_blank" title="Klik untuk memperbesar">
+                  <img src="{{ route('payments.proof', $payment) }}" alt="Bukti transfer {{ $payment->invoice_number }}" class="max-h-80 mx-auto rounded object-contain">
                 </a>
                 <p class="text-xs text-neutral-500 mt-2">Klik gambar untuk melihat ukuran penuh</p>
               </div>

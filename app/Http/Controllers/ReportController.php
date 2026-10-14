@@ -177,14 +177,29 @@ class ReportController extends Controller
             $expenseQuery->whereMonth('expense_date', $m);
         }
 
-        $callback = function () use ($tab, $incomeQuery, $expenseQuery) {
+        $sanitizeCell = function (mixed $value): mixed {
+            if (! is_string($value)) {
+                return $value;
+            }
+            // Cegah CSV Formula Injection jika sel diawali =, +, -, @, tab, atau newline
+            if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+                return "'" . $value;
+            }
+            return $value;
+        };
+
+        $writeRow = function ($handle, array $row) use ($sanitizeCell) {
+            fputcsv($handle, array_map($sanitizeCell, $row));
+        };
+
+        $callback = function () use ($tab, $incomeQuery, $expenseQuery, $writeRow) {
             $handle = fopen('php://output', 'w');
             fputs($handle, "\xEF\xBB\xBF");
 
             if ($tab === 'expenses') {
-                fputcsv($handle, ['ID', 'Judul Pengeluaran', 'Keterangan', 'Tanggal', 'Nominal (Rp)', 'Dicatat Oleh']);
+                $writeRow($handle, ['ID', 'Judul Pengeluaran', 'Keterangan', 'Tanggal', 'Nominal (Rp)', 'Dicatat Oleh']);
                 foreach ($expenseQuery->latest('expense_date')->cursor() as $exp) {
-                    fputcsv($handle, [
+                    $writeRow($handle, [
                         $exp->id,
                         $exp->title,
                         $exp->description ?? '-',
@@ -194,13 +209,13 @@ class ReportController extends Controller
                     ]);
                 }
             } elseif ($tab === 'occupancy') {
-                fputcsv($handle, ['Nomor Kamar', 'Lantai', 'Harga Sewa / Bulan (Rp)', 'Status Kamar', 'Penghuni Saat Ini', 'No. HP']);
+                $writeRow($handle, ['Nomor Kamar', 'Lantai', 'Harga Sewa / Bulan (Rp)', 'Status Kamar', 'Penghuni Saat Ini', 'No. HP']);
                 $rooms = Room::with(['leases' => function ($q) {
                     $q->where('status', 'active')->with('tenant.user');
                 }])->where('is_active', true)->orderBy('room_number')->get();
                 foreach ($rooms as $r) {
                     $activeLease = $r->leases->first();
-                    fputcsv($handle, [
+                    $writeRow($handle, [
                         $r->room_number,
                         'Lantai ' . $r->floor,
                         $r->price,
@@ -210,10 +225,10 @@ class ReportController extends Controller
                     ]);
                 }
             } elseif ($tab === 'maintenance') {
-                fputcsv($handle, ['ID', 'Judul Keluhan', 'Kamar', 'Pelapor', 'Prioritas', 'Status', 'Biaya (Rp)', 'Tgl Lapor', 'Tgl Selesai']);
+                $writeRow($handle, ['ID', 'Judul Keluhan', 'Kamar', 'Pelapor', 'Prioritas', 'Status', 'Biaya (Rp)', 'Tgl Lapor', 'Tgl Selesai']);
                 $maintQuery = MaintenanceRequest::with(['room', 'tenant.user'])->latest('reported_at');
                 foreach ($maintQuery->cursor() as $m) {
-                    fputcsv($handle, [
+                    $writeRow($handle, [
                         $m->id,
                         $m->title,
                         $m->room ? 'Kamar ' . $m->room->room_number : '-',
@@ -226,9 +241,9 @@ class ReportController extends Controller
                     ]);
                 }
             } else {
-                fputcsv($handle, ['Invoice', 'Kamar', 'Penghuni', 'Periode Sewa', 'Tgl Bayar', 'Metode', 'Status', 'Pemasukan (Rp)']);
+                $writeRow($handle, ['Invoice', 'Kamar', 'Penghuni', 'Periode Sewa', 'Tgl Bayar', 'Metode', 'Status', 'Pemasukan (Rp)']);
                 foreach ($incomeQuery->latest('payment_date')->cursor() as $pay) {
-                    fputcsv($handle, [
+                    $writeRow($handle, [
                         $pay->invoice_number,
                         $pay->lease?->room ? 'Kamar ' . $pay->lease->room->room_number : '-',
                         $pay->lease?->tenant?->user?->name ?? '-',

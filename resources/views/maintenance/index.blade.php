@@ -199,7 +199,7 @@
                       @if(!auth()->user() || (!auth()->user()->hasRole('owner') && !auth()->user()->hasRole('tenant')))
                         <button type="button" class="btn btn-primary btn-sm"
                                 style="background: var(--color-neutral-900); border-color: var(--color-neutral-900); padding: 3px 10px; font-size: 12px;"
-                                onclick="openUpdateStatusModal('{{ route('maintenance.update-status', $item) }}', '{{ addslashes($item->title) }}', '{{ $item->room->room_number ?? 'Kamar' }}', '{{ $item->status }}', '{{ $item->handled_by ?? '' }}', '{{ (int)$item->cost }}', '{{ $item->completion_image ? asset('storage/' . $item->completion_image) : '' }}', '{{ addslashes($item->handler->name ?? '') }}')"
+                                onclick="openUpdateStatusModal('{{ route('maintenance.update-status', $item) }}', '{{ addslashes($item->title) }}', '{{ $item->room->room_number ?? 'Kamar' }}', '{{ $item->status }}', '{{ $item->handled_by ?? '' }}', '{{ (int)$item->cost }}', '{{ $item->completion_image ? route('maintenance.completion-image', $item) : '' }}', '{{ addslashes($item->handler->name ?? '') }}')"
                                 title="Perbarui status pengerjaan tiket">
                           Status
                         </button>

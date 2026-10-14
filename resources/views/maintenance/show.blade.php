@@ -157,8 +157,8 @@
               <div class="text-xs font-semibold text-neutral-700 mb-2">Foto Kerusakan (Dilaporkan)</div>
               @if($maintenance->image_path)
                 <div class="p-2 border border-neutral-200 rounded-lg text-center bg-neutral-50">
-                  <a href="{{ asset('storage/' . $maintenance->image_path) }}" target="_blank" title="Klik untuk melihat foto penuh">
-                    <img src="{{ asset('storage/' . $maintenance->image_path) }}" alt="Foto kerusakan {{ $maintenance->title }}" class="max-h-64 mx-auto rounded object-contain">
+                  <a href="{{ route('maintenance.image', $maintenance) }}" target="_blank" title="Klik untuk melihat foto penuh">
+                    <img src="{{ route('maintenance.image', $maintenance) }}" alt="Foto kerusakan {{ $maintenance->title }}" class="max-h-64 mx-auto rounded object-contain">
                   </a>
                   <p class="text-xs text-neutral-500 mt-2">Klik gambar untuk melihat resolusi penuh</p>
                 </div>
@@ -173,8 +173,8 @@
               <div class="text-xs font-semibold text-neutral-700 mb-2">Bukti Foto Penyelesaian (Teknisi)</div>
               @if($maintenance->completion_image)
                 <div class="p-2 border border-neutral-200 rounded-lg text-center bg-neutral-50">
-                  <a href="{{ asset('storage/' . $maintenance->completion_image) }}" target="_blank" title="Klik untuk melihat bukti penyelesaian">
-                    <img src="{{ asset('storage/' . $maintenance->completion_image) }}" alt="Bukti penyelesaian {{ $maintenance->title }}" class="max-h-64 mx-auto rounded object-contain">
+                  <a href="{{ route('maintenance.completion-image', $maintenance) }}" target="_blank" title="Klik untuk melihat bukti penyelesaian">
+                    <img src="{{ route('maintenance.completion-image', $maintenance) }}" alt="Bukti penyelesaian {{ $maintenance->title }}" class="max-h-64 mx-auto rounded object-contain">
                   </a>
                   <p class="text-xs text-neutral-500 mt-2">Klik gambar untuk melihat resolusi penuh</p>
                 </div>

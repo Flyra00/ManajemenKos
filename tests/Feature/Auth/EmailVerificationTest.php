@@ -97,4 +97,28 @@ class EmailVerificationTest extends TestCase
 
         $response->assertStatus(200);
     }
+
+    public function test_management_email_addresses_no_longer_bypass_verification(): void
+    {
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'tenant', 'guard_name' => 'web']);
+
+        // Email yang dulu di-hardcode kini tidak lagi mem-bypass verifikasi:
+        // status diambil dari database (email_verified_at atau peran pengelola).
+        $user = User::factory()->unverified()->create(['email' => 'owner@gmail.com']);
+        $user->assignRole('tenant');
+
+        $this->assertFalse($user->hasVerifiedEmail());
+        $this->actingAs($user)->get('/dashboard')->assertRedirect('/verify-email');
+    }
+
+    public function test_management_role_alone_bypasses_verification_from_database(): void
+    {
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'staff', 'guard_name' => 'web']);
+
+        $staff = User::factory()->unverified()->create(['email' => 'somebody@example.com']);
+        $staff->assignRole('staff');
+
+        $this->assertTrue($staff->hasVerifiedEmail());
+        $this->actingAs($staff)->get('/dashboard')->assertStatus(200);
+    }
 }

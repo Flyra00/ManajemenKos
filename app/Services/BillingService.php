@@ -44,7 +44,17 @@ class BillingService
         $generated = 0;
         $skipped = 0;
 
+        $monthEnd = $targetDate->copy()->endOfMonth()->toDateString();
+
         foreach ($activeLeases as $lease) {
+            // Jangan tagih periode yang sudah tertutup penuh oleh masa aktif sewa.
+            // Contoh: kontrak multi-bulan yang dibayar di muka (end_date jauh ke
+            // depan) tidak boleh ditagih ulang setiap bulan — itu tagihan ganda.
+            if ($lease->end_date && $lease->end_date->toDateString() >= $monthEnd) {
+                $skipped++;
+                continue;
+            }
+
             // Cek apakah tagihan untuk periode bulan ini sudah pernah diterbitkan
             $alreadyBilled = Payment::where('lease_id', $lease->id)
                 ->whereYear('billing_period', $year)
