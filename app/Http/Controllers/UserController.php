@@ -90,13 +90,24 @@ class UserController extends Controller
      * message. Kedua hal itu kini dihapus: admin hanya memicu pengiriman tautan,
      * dan hanya pemilik email yang dapat menetapkan kata sandi barunya sendiri.
      */
-    public function resetPassword(User $user)
+    public function resetPassword(User $user, \App\Services\EmailSecurityService $securityService)
     {
+        $email = $user->email;
+
+        // Periksa jeda (cooldown) anti-spam bertingkat (5 menit ke-1, 10 menit ke-2+)
+        if ($secondsRemaining = $securityService->getCooldownRemaining('password_reset', $email)) {
+            $errorMessage = $securityService->getCooldownErrorMessage($secondsRemaining, 'tautan atur ulang kata sandi');
+
+            return back()->with('error', $errorMessage);
+        }
+
         $status = Password::sendResetLink(['email' => $user->email]);
 
         if ($status !== Password::RESET_LINK_SENT) {
             return back()->with('error', "Gagal mengirim tautan atur ulang kata sandi ke email {$user->email}. Pastikan alamat email valid dan coba lagi.");
         }
+
+        $securityService->recordSentAttempt('password_reset', $email);
 
         return back()->with('success', "Tautan atur ulang kata sandi telah dikirim ke email {$user->email}. Penghuni menetapkan sendiri kata sandi barunya.");
     }

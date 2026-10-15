@@ -79,6 +79,17 @@
           </div>
         @endif
 
+        <!-- Status Peringatan / Cooldown Anti-Spam -->
+        @if (session('error'))
+          <div style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 14px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; line-height: 1.5; display: flex; gap: 10px; align-items: flex-start;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color:#dc2626; margin-top:2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <div>
+              <strong>Perhatian:</strong>
+              <div style="margin-top: 2px;">{{ session('error') }}</div>
+            </div>
+          </div>
+        @endif
+
         <form method="POST" action="{{ route('password.email') }}">
           @csrf
 

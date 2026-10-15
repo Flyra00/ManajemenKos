@@ -28,7 +28,7 @@ class RegisteredUserController extends Controller
      *
      * @throws ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, \App\Services\EmailSecurityService $securityService): RedirectResponse
     {
         $request->validate([
             'name'     => ['required', 'string', 'max:255'],
@@ -58,6 +58,7 @@ class RegisteredUserController extends Controller
         $user->assignRole('tenant');
 
         event(new Registered($user));
+        $securityService->recordSentAttempt('email_verification', $user->email);
 
         Auth::login($user);
         $request->session()->regenerate();
