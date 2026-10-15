@@ -143,14 +143,16 @@ class DashboardController extends Controller
 
         // Kontrak sewa aktif / terkini
         $activeLease = null;
+        $pendingLease = null;
         $remainingDays = 0;
         $totalDays = 0;
         $leaseProgressPct = 0;
 
         if ($tenant) {
+            // Kontrak yang benar-benar aktif (setelah pembayaran sewa pertama lunas/diverifikasi)
             $activeLease = $tenant->leases()
                 ->with(['room.facilities'])
-                ->whereIn('status', ['active', 'pending'])
+                ->where('status', 'active')
                 ->latest('start_date')
                 ->first();
 
@@ -164,6 +166,13 @@ class DashboardController extends Controller
 
                 $daysElapsed = max(0, $start->diffInDays($today));
                 $leaseProgressPct = min(100, round(($daysElapsed / $totalDays) * 100));
+            } else {
+                // Booking kamar yang masih menunggu penyelesaian/verifikasi pembayaran pertama
+                $pendingLease = $tenant->leases()
+                    ->with(['room.facilities'])
+                    ->where('status', 'pending')
+                    ->latest('start_date')
+                    ->first();
             }
         }
 
@@ -203,6 +212,7 @@ class DashboardController extends Controller
             'user',
             'tenant',
             'activeLease',
+            'pendingLease',
             'remainingDays',
             'totalDays',
             'leaseProgressPct',

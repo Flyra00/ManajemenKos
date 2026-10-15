@@ -13,9 +13,10 @@
           <p class="page-sub">Pantau dan kelola tiket laporan kerusakan kamar serta perbaikan fasilitas kos.</p>
         </div>
         @php
-          $tenantHasRoom = !auth()->check() || !auth()->user()->hasRole('tenant') || (auth()->user()->tenant && auth()->user()->tenant->leases()->whereIn('status', ['active', 'pending'])->exists());
+          $tenantHasActiveRoom = !auth()->check() || !auth()->user()->hasRole('tenant') || (auth()->user()->tenant && auth()->user()->tenant->leases()->where('status', 'active')->exists());
+          $tenantHasPendingLease = auth()->check() && auth()->user()->hasRole('tenant') && (auth()->user()->tenant && auth()->user()->tenant->leases()->where('status', 'pending')->exists());
         @endphp
-        @if((!auth()->user() || !auth()->user()->hasRole('owner')) && $tenantHasRoom)
+        @if((!auth()->user() || !auth()->user()->hasRole('owner')) && $tenantHasActiveRoom)
           <div class="flex head-actions">
             <a href="{{ route('maintenance.create') }}" class="btn btn-primary">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
@@ -25,7 +26,7 @@
         @endif
       </section>
 
-      @if(auth()->check() && auth()->user()->hasRole('tenant') && !$tenantHasRoom)
+      @if(auth()->check() && auth()->user()->hasRole('tenant') && !$tenantHasActiveRoom)
         <div class="card elev-sm" style="margin-bottom: 24px; background: #eff6ff; border: 1px solid #bfdbfe; padding: 18px 20px; border-radius: 8px;">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
             <div style="display: flex; align-items: center; gap: 14px;">
@@ -33,13 +34,23 @@
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               </div>
               <div>
-                <h4 style="margin: 0 0 4px; font-size: 15px; font-weight: 700; color: #1e40af;">Anda Belum Memiliki Kamar Aktif</h4>
-                <p class="small" style="margin: 0; color: #1e3a8a;">Layanan tiket laporan perbaikan fasilitas hanya dapat diajukan setelah Anda aktif menyewa kamar kos.</p>
+                <h4 style="margin: 0 0 4px; font-size: 15px; font-weight: 700; color: #1e40af;">
+                  {{ $tenantHasPendingLease ? 'Menunggu Pembayaran Sewa Pertama' : 'Anda Belum Memiliki Kamar Aktif' }}
+                </h4>
+                <p class="small" style="margin: 0; color: #1e3a8a;">
+                  {{ $tenantHasPendingLease ? 'Layanan tiket pengaduan fasilitas baru dapat diakses setelah pembayaran sewa pertama selesai diverifikasi dan sewa kamar resmi aktif.' : 'Layanan tiket laporan perbaikan fasilitas hanya dapat diajukan setelah Anda aktif menyewa kamar kos.' }}
+                </p>
               </div>
             </div>
-            <a href="{{ route('public.rooms.index') }}" class="btn btn-primary btn-sm" style="font-weight: 600;">
-              Pilih Kamar Dari Katalog &rarr;
-            </a>
+            @if($tenantHasPendingLease)
+              <a href="{{ route('dashboard') }}" class="btn btn-primary btn-sm" style="font-weight: 600;">
+                Lihat Tagihan Sewa &rarr;
+              </a>
+            @else
+              <a href="{{ route('public.rooms.index') }}" class="btn btn-primary btn-sm" style="font-weight: 600;">
+                Pilih Kamar Dari Katalog &rarr;
+              </a>
+            @endif
           </div>
         </div>
       @endif

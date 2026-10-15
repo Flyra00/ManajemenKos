@@ -254,4 +254,68 @@ class TenantDashboardTest extends TestCase
 
         $response->assertRedirect($payment->public_url);
     }
+
+    public function test_tenant_with_only_pending_lease_cannot_access_or_see_maintenance(): void
+    {
+        $user = User::factory()->create(['name' => 'Rafly']);
+        $user->assignRole('tenant');
+
+        $tenant = Tenant::create([
+            'user_id'    => $user->id,
+            'ktp_number' => '3201123456787777',
+        ]);
+
+        $room = Room::create([
+            'room_number' => 'A-01',
+            'floor'       => '1',
+            'price'       => 900000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $lease = Lease::create([
+            'tenant_id'      => $tenant->id,
+            'room_id'        => $room->id,
+            'start_date'     => now()->toDateString(),
+            'end_date'       => now()->addMonth()->toDateString(),
+            'monthly_price'  => 900000,
+            'deposit_amount' => 0,
+            'status'         => 'pending',
+        ]);
+
+        Payment::create([
+            'lease_id'       => $lease->id,
+            'invoice_number' => 'INV-202610-0001',
+            'amount'         => 900000,
+            'billing_period' => now()->startOfMonth()->toDateString(),
+            'due_date'       => now()->addDay()->toDateString(),
+            'status'         => 'unpaid',
+        ]);
+
+        // 1. Dashboard harus menampilkan status Menunggu Pembayaran & Layanan Maintenance Belum Tersedia
+        $dashboardResponse = $this->actingAs($user)->get(route('dashboard'));
+        $dashboardResponse->assertOk();
+        $dashboardResponse->assertSee('Menunggu Pembayaran');
+        $dashboardResponse->assertSee('Layanan Maintenance Belum Tersedia');
+        $dashboardResponse->assertDontSee('+ Laporkan Kerusakan');
+        $dashboardResponse->assertDontSee('Ajukan Laporan Perbaikan');
+
+        // Sidebar tidak boleh ada link menu maintenance
+        $dashboardResponse->assertDontSee(route('maintenance.index'));
+
+        // 2. Akses langsung ke maintenance.create harus ditolak & diredirect ke dashboard
+        $createResponse = $this->actingAs($user)->get(route('maintenance.create'));
+        $createResponse->assertRedirect(route('dashboard'));
+        $createResponse->assertSessionHas('error');
+
+        // 3. POST ke maintenance.store juga harus ditolak
+        $storeResponse = $this->actingAs($user)->post(route('maintenance.store'), [
+            'room_id'     => $room->id,
+            'title'       => 'Kamar Rusak',
+            'priority'    => 'medium',
+            'description' => 'Test keluhan sebelum bayar',
+        ]);
+        $storeResponse->assertRedirect(route('dashboard'));
+        $storeResponse->assertSessionHas('error');
+    }
 }

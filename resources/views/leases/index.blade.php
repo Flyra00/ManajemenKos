@@ -146,7 +146,7 @@
                     @if($lease->status === 'active')
                       <span class="tag tag-accent">Aktif</span>
                     @elseif($lease->status === 'pending')
-                      <span class="tag tag-outline" style="color:var(--color-accent-2); border-color:var(--color-accent-2); font-weight:600">Pending</span>
+                      <span class="tag tag-outline" style="color:#d97706; border-color:#d97706; background:#fffbeb; font-weight:700" title="Booking kamar sedang menunggu pembayaran invoice pertama">Pending (Menunggu Bayar)</span>
                     @elseif($lease->status === 'completed')
                       <span class="tag tag-neutral">Selesai</span>
                     @else

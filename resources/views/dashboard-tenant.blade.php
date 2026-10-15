@@ -104,32 +104,37 @@
       <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 24px;">
 
         <!-- Sisi Kiri: Foto, Nama Kamar, Lantai, Tarif -->
+        @php
+          $displayLease = $activeLease ?? ($pendingLease ?? null);
+        @endphp
         <div style="display: flex; gap: 20px; align-items: center; flex: 1; min-width: 280px;">
           <div style="width: 110px; height: 88px; border-radius: 8px; overflow: hidden; background: var(--color-neutral-100); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
-            @if($activeLease && $activeLease->room && $activeLease->room->image)
-              <img src="{{ asset('storage/' . $activeLease->room->image) }}" alt="Kamar {{ $activeLease->room->room_number }}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80';" style="width: 100%; height: 100%; object-fit: cover;">
+            @if($displayLease && $displayLease->room && $displayLease->room->image)
+              <img src="{{ asset('storage/' . $displayLease->room->image) }}" alt="Kamar {{ $displayLease->room->room_number }}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80';" style="width: 100%; height: 100%; object-fit: cover;">
             @else
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--color-neutral-400);"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-8h6v8"/></svg>
             @endif
           </div>
 
           <div>
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
               <h3 style="font-size: 22px; font-weight: 800; margin: 0; color: var(--color-neutral-900);">
-                @if($activeLease && $activeLease->room)
-                  Kamar {{ $activeLease->room->room_number }}
+                @if($displayLease && $displayLease->room)
+                  Kamar {{ $displayLease->room->room_number }}
                 @else
                   Belum Ada Kamar Aktif
                 @endif
               </h3>
               @if($activeLease)
-                <span class="tag tag-accent" style="font-size: 11px; padding: 2px 8px;">{{ ucfirst($activeLease->status) }}</span>
+                <span class="tag tag-accent" style="font-size: 11px; padding: 2px 8px;">Aktif</span>
+              @elseif($pendingLease)
+                <span class="tag tag-outline" style="font-size: 11px; padding: 2px 8px; color: #d97706; border-color: #d97706; background: #fffbeb; font-weight: 700;">Menunggu Pembayaran</span>
               @endif
             </div>
 
             <div class="small muted" style="margin-bottom: 6px;">
-              @if($activeLease && $activeLease->room)
-                Lantai {{ $activeLease->room->floor }} · {{ $kosSettings['name'] }}
+              @if($displayLease && $displayLease->room)
+                Lantai {{ $displayLease->room->floor }} · {{ $kosSettings['name'] }}
               @else
                 Pilih kamar dari katalog untuk mulai menyewa
               @endif
@@ -139,6 +144,14 @@
               <div style="font-size: 16px; font-weight: 800; color: var(--color-neutral-900);">
                 Rp {{ number_format($activeLease->monthly_price, 0, ',', '.') }}
                 <span class="small muted" style="font-weight: 400; font-size: 12px;">/ bulan</span>
+              </div>
+            @elseif($pendingLease)
+              <div style="font-size: 16px; font-weight: 800; color: var(--color-neutral-900);">
+                Rp {{ number_format($pendingLease->monthly_price, 0, ',', '.') }}
+                <span class="small muted" style="font-weight: 400; font-size: 12px;">/ bulan (Booking Tertahan)</span>
+              </div>
+              <div class="small" style="margin-top: 6px; color: #b45309; font-weight: 600;">
+                ⚠️ Kamar ini berhasil di-hold sementara. Selesaikan pembayaran invoice pertama agar status sewa aktif.
               </div>
             @else
               <div style="margin-top: 10px;">
@@ -154,10 +167,10 @@
       </div>
 
       <!-- Fasilitas Kamar (Chip Netral Bersih) -->
-      @if($activeLease && $activeLease->room && $activeLease->room->facilities->isNotEmpty())
+      @if($displayLease && $displayLease->room && $displayLease->room->facilities->isNotEmpty())
         <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--color-divider); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
           <span class="small muted" style="font-size: 12px; margin-right: 4px;">Fasilitas Kamar:</span>
-          @foreach($activeLease->room->facilities as $facility)
+          @foreach($displayLease->room->facilities as $facility)
             <span class="tag tag-neutral" style="font-size: 11px; font-weight: 500; background: var(--color-neutral-100); border: 1px solid var(--color-divider); color: var(--color-neutral-700);">
               ✓ {{ $facility->name }}
             </span>
@@ -274,6 +287,8 @@
               <a href="{{ route('maintenance.create') }}" class="btn btn-primary btn-sm" style="font-size: 12px;">
                 + Laporkan Kerusakan
               </a>
+            @elseif($pendingLease)
+              <span class="tag tag-outline" style="font-size: 11px; color: #d97706; border-color: #d97706;">Belum Aktif</span>
             @else
               <span class="tag tag-neutral" style="font-size: 11px;">Kamar Belum Aktif</span>
             @endif
@@ -334,10 +349,24 @@
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               </div>
               <h4 style="font-size: 15px; font-weight: 700; margin: 0 0 6px;">Layanan Maintenance Belum Tersedia</h4>
-              <p class="small muted" style="margin: 0 0 16px; max-width: 360px; margin-inline: auto;">Fitur pengaduan kerusakan dan keluhan fasilitas hanya dapat diakses setelah Anda memiliki kamar kos aktif.</p>
-              <a href="{{ route('public.rooms.index') }}" class="btn btn-secondary btn-sm" style="font-weight: 600;">
-                Pilih Kamar Dari Katalog &rarr;
-              </a>
+              <p class="small muted" style="margin: 0 0 16px; max-width: 380px; margin-inline: auto;">
+                @if($pendingLease)
+                  Fitur pengaduan kerusakan dan keluhan fasilitas baru dapat diakses setelah pembayaran tagihan sewa pertama selesai diverifikasi dan kontrak kamar Anda resmi aktif.
+                @else
+                  Fitur pengaduan kerusakan dan keluhan fasilitas hanya dapat diakses setelah Anda memiliki kamar kos aktif.
+                @endif
+              </p>
+              @if($pendingLease)
+                @if($unpaidPayments->isNotEmpty())
+                  <a href="{{ $unpaidPayments->first()->public_url }}" class="btn btn-primary btn-sm" style="font-weight: 600;">
+                    Bayar Tagihan Sewa &rarr;
+                  </a>
+                @endif
+              @else
+                <a href="{{ route('public.rooms.index') }}" class="btn btn-secondary btn-sm" style="font-weight: 600;">
+                  Pilih Kamar Dari Katalog &rarr;
+                </a>
+              @endif
             </div>
           @else
             <div class="text-center py-6" style="padding: 32px 16px;">

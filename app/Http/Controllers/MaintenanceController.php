@@ -147,10 +147,14 @@ class MaintenanceController extends Controller
                 return redirect()->route('dashboard')
                     ->with('error', 'Anda belum memiliki kamar sewa aktif. Silakan pilih dan sewa kamar terlebih dahulu untuk mengajukan perbaikan.');
             }
-            $activeRoomIds = $tenant->leases()->whereIn('status', ['active', 'pending'])->pluck('room_id');
+            $activeRoomIds = $tenant->leases()->where('status', 'active')->pluck('room_id');
             if ($activeRoomIds->isEmpty()) {
-                return redirect()->route('dashboard')
-                    ->with('error', 'Anda belum memiliki kamar sewa aktif. Silakan pilih dan sewa kamar terlebih dahulu untuk mengajukan perbaikan.');
+                $hasPending = $tenant->leases()->where('status', 'pending')->exists();
+                $message = $hasPending
+                    ? 'Layanan maintenance hanya dapat diakses setelah pembayaran sewa pertama selesai diverifikasi dan kontrak Anda resmi aktif.'
+                    : 'Anda belum memiliki kamar sewa aktif. Silakan pilih dan sewa kamar terlebih dahulu untuk mengajukan perbaikan.';
+
+                return redirect()->route('dashboard')->with('error', $message);
             }
             $rooms = Room::whereIn('id', $activeRoomIds)->get();
             $tenants = collect([$tenant->load('user')]);
@@ -187,10 +191,14 @@ class MaintenanceController extends Controller
                     ->with('error', 'Anda belum memiliki kamar sewa aktif. Silakan pilih dan sewa kamar terlebih dahulu.');
             }
 
-            $allowedRoomIds = $tenant->leases()->whereIn('status', ['active', 'pending'])->pluck('room_id');
+            $allowedRoomIds = $tenant->leases()->where('status', 'active')->pluck('room_id');
             if ($allowedRoomIds->isEmpty()) {
-                return redirect()->route('dashboard')
-                    ->with('error', 'Anda belum memiliki kamar sewa aktif. Silakan sewa kamar terlebih dahulu untuk mengajukan keluhan.');
+                $hasPending = $tenant->leases()->where('status', 'pending')->exists();
+                $message = $hasPending
+                    ? 'Layanan maintenance hanya dapat diakses setelah pembayaran sewa pertama selesai diverifikasi dan status sewa Anda resmi aktif.'
+                    : 'Anda belum memiliki kamar sewa aktif. Silakan sewa kamar terlebih dahulu untuk mengajukan keluhan.';
+
+                return redirect()->route('dashboard')->with('error', $message);
             }
 
             $validated = $request->validate([
@@ -349,7 +357,7 @@ class MaintenanceController extends Controller
             }
 
             $tenant = $user->tenant;
-            $allowedRoomIds = $tenant ? $tenant->leases()->whereIn('status', ['active', 'pending'])->pluck('room_id') : collect();
+            $allowedRoomIds = $tenant ? $tenant->leases()->where('status', 'active')->pluck('room_id') : collect();
             $allowedRoomIds->push($maintenance->room_id);
 
             $validated = $request->validate([
