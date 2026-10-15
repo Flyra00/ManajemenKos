@@ -16,6 +16,45 @@
     </div>
   </section>
 
+  <!-- Banner Peringatan Jika Tenant Sudah Memiliki Kamar (Batas 1 Kamar / Tenant) -->
+  @if($existingLease)
+    <div class="card elev-sm" style="margin-bottom: 20px; padding: 18px 20px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="width: 40px; height: 40px; border-radius: 50%; background: #fef3c7; display: flex; align-items: center; justify-content: center; color: #d97706; flex-shrink: 0;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div>
+          <strong style="color: #92400e; font-size: 14px; display: block; margin-bottom: 2px;">
+            @if($existingLease->status === 'active')
+              Anda Sudah Menempati Kamar {{ $existingLease->room->room_number }} (Status: Aktif)
+            @else
+              Anda Memiliki Pesanan Kamar {{ $existingLease->room->room_number }} (Menunggu Pembayaran)
+            @endif
+          </strong>
+          <span style="color: #b45309; font-size: 13px; line-height: 1.5; display: block;">
+            Setiap akun penghuni dibatasi hanya dapat menyewa 1 kamar kos. Anda tidak dapat mengajukan sewa untuk kamar lain secara bersamaan.
+          </span>
+        </div>
+      </div>
+      <div>
+        @if($existingLease->status === 'active')
+          <a href="{{ route('dashboard') }}" class="btn btn-secondary btn-sm" style="font-weight: 700;">
+            Lihat Kamar Saya &rarr;
+          </a>
+        @else
+          @php
+            $pendingInv = $existingLease->payments()->whereIn('status', ['unpaid', 'pending', 'overdue'])->first();
+          @endphp
+          @if($pendingInv)
+            <a href="{{ $pendingInv->public_url }}" class="btn btn-primary btn-sm" style="background: #d97706; border-color: #d97706; font-weight: 700;">
+              Bayar Tagihan #{{ $pendingInv->invoice_number }} &rarr;
+            </a>
+          @endif
+        @endif
+      </div>
+    </div>
+  @endif
+
   <!-- Toolbar Filter & Pencarian -->
   <section class="card elev-sm" style="padding: 16px 20px; border: 1px solid var(--color-divider); background: #ffffff; border-radius: 8px;">
     <form method="GET" action="{{ route('public.rooms.index') }}" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
@@ -106,9 +145,19 @@
 
           <!-- Tombol Aksi Detail & Sewa -->
           <div style="padding-top: 14px; border-top: 1px solid var(--color-divider);">
-            <a href="{{ route('public.rooms.show', $room) }}" class="btn btn-primary btn-block" style="font-weight: 700; font-size: 13px; text-align: center;">
-              Pilih &amp; Ajukan Sewa &rarr;
-            </a>
+            @if($existingLease && $existingLease->room_id === $room->id)
+              <a href="{{ route('public.rooms.show', $room) }}" class="btn btn-secondary btn-block" style="font-weight: 700; font-size: 13px; text-align: center; color: var(--color-accent); border-color: var(--color-accent);">
+                ✓ Kamar Pilihan Anda &rarr;
+              </a>
+            @elseif($existingLease)
+              <a href="{{ route('public.rooms.show', $room) }}" class="btn btn-secondary btn-block" style="font-weight: 600; font-size: 13px; text-align: center;">
+                Lihat Spesifikasi Kamar &rarr;
+              </a>
+            @else
+              <a href="{{ route('public.rooms.show', $room) }}" class="btn btn-primary btn-block" style="font-weight: 700; font-size: 13px; text-align: center;">
+                Pilih &amp; Ajukan Sewa &rarr;
+              </a>
+            @endif
           </div>
         </div>
 

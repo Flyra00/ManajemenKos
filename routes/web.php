@@ -63,6 +63,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/leases/{lease}/contract', [LeaseController::class, 'contract'])->name('leases.contract');
     Route::get('/leases/{lease}/checkout-receipt', [LeaseController::class, 'checkoutReceipt'])->name('leases.checkout-receipt');
     Route::post('/leases/{lease}/request-bill', [LeaseController::class, 'requestBill'])->name('tenant.leases.request-bill');
+    Route::post('/leases/{lease}/cancel-booking', [BookingController::class, 'cancelBooking'])->name('tenant.leases.cancel-booking');
 
     // Berkas Lampiran Privat Terproteksi (Bukti Bayar & Foto Maintenance)
     Route::get('/payments/{payment}/proof', [PaymentController::class, 'proof'])->name('payments.proof');

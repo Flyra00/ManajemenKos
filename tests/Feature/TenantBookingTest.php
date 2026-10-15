@@ -633,5 +633,190 @@ class TenantBookingTest extends TestCase
         $guestResponse->assertOk();
         $guestResponse->assertViewIs('invoices.show');
     }
+
+    public function test_tenant_cannot_book_second_room_when_already_has_active_lease(): void
+    {
+        $tenantUser = User::factory()->create();
+        $tenantUser->assignRole('tenant');
+        $tenant = Tenant::create([
+            'user_id'    => $tenantUser->id,
+            'ktp_number' => '3201012345671111',
+        ]);
+
+        $room1 = Room::create([
+            'room_number' => 'ACT-01',
+            'floor'       => 1,
+            'price'       => 1000000,
+            'status'      => 'occupied',
+            'is_active'   => true,
+        ]);
+
+        Lease::create([
+            'tenant_id'      => $tenant->id,
+            'room_id'        => $room1->id,
+            'start_date'     => now()->toDateString(),
+            'end_date'       => now()->addMonths(1)->toDateString(),
+            'monthly_price'  => 1000000,
+            'deposit_amount' => 0,
+            'status'         => 'active',
+        ]);
+
+        $room2 = Room::create([
+            'room_number' => 'ACT-02',
+            'floor'       => 1,
+            'price'       => 1200000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        // Percobaan memesan kamar ke-2 harus ditolak
+        $response = $this->actingAs($tenantUser)->post(route('public.rooms.book', $room2), [
+            'ktp_number'      => '3201012345671111',
+            'start_date'      => now()->toDateString(),
+            'duration_months' => 1,
+        ]);
+
+        $response->assertRedirect(route('dashboard'));
+        $response->assertSessionHas('error');
+        $this->assertStringContainsString('Kamar ACT-01', session('error'));
+
+        // Pastikan tidak ada lease baru untuk ACT-02
+        $this->assertDatabaseMissing('leases', [
+            'room_id'   => $room2->id,
+            'tenant_id' => $tenant->id,
+        ]);
+    }
+
+    public function test_tenant_cannot_book_second_room_when_already_has_pending_lease(): void
+    {
+        $tenantUser = User::factory()->create();
+        $tenantUser->assignRole('tenant');
+        $tenant = Tenant::create([
+            'user_id'    => $tenantUser->id,
+            'ktp_number' => '3201012345672222',
+        ]);
+
+        $room1 = Room::create([
+            'room_number' => 'PND-01',
+            'floor'       => 1,
+            'price'       => 1000000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $lease1 = Lease::create([
+            'tenant_id'      => $tenant->id,
+            'room_id'        => $room1->id,
+            'start_date'     => now()->toDateString(),
+            'end_date'       => now()->addMonths(1)->toDateString(),
+            'monthly_price'  => 1000000,
+            'deposit_amount' => 0,
+            'status'         => 'pending',
+        ]);
+
+        Payment::create([
+            'lease_id'       => $lease1->id,
+            'invoice_number' => 'INV-PND-001',
+            'amount'         => 1000000,
+            'billing_period' => now()->toDateString(),
+            'due_date'       => now()->addDay()->toDateString(),
+            'status'         => 'unpaid',
+            'payment_method' => 'bank_tf',
+        ]);
+
+        $room2 = Room::create([
+            'room_number' => 'PND-02',
+            'floor'       => 1,
+            'price'       => 1200000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        // Percobaan memesan kamar ke-2 harus ditolak dan diarahkan ke invoice kamar 1
+        $response = $this->actingAs($tenantUser)->post(route('public.rooms.book', $room2), [
+            'ktp_number'      => '3201012345672222',
+            'start_date'      => now()->toDateString(),
+            'duration_months' => 1,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertStringContainsString('PND-01', session('error'));
+
+        // Pastikan tidak ada lease baru untuk PND-02
+        $this->assertDatabaseMissing('leases', [
+            'room_id'   => $room2->id,
+            'tenant_id' => $tenant->id,
+        ]);
+    }
+
+    public function test_tenant_can_cancel_pending_booking_and_book_another_room(): void
+    {
+        $tenantUser = User::factory()->create();
+        $tenantUser->assignRole('tenant');
+        $tenant = Tenant::create([
+            'user_id'    => $tenantUser->id,
+            'ktp_number' => '3201012345673333',
+        ]);
+
+        $room1 = Room::create([
+            'room_number' => 'CAN-01',
+            'floor'       => 1,
+            'price'       => 1000000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $lease1 = Lease::create([
+            'tenant_id'      => $tenant->id,
+            'room_id'        => $room1->id,
+            'start_date'     => now()->toDateString(),
+            'end_date'       => now()->addMonths(1)->toDateString(),
+            'monthly_price'  => 1000000,
+            'deposit_amount' => 0,
+            'status'         => 'pending',
+        ]);
+
+        $payment1 = Payment::create([
+            'lease_id'       => $lease1->id,
+            'invoice_number' => 'INV-CAN-001',
+            'amount'         => 1000000,
+            'billing_period' => now()->toDateString(),
+            'due_date'       => now()->addDay()->toDateString(),
+            'status'         => 'unpaid',
+            'payment_method' => 'bank_tf',
+        ]);
+
+        // Batalkan booking kamar 1
+        $cancelResponse = $this->actingAs($tenantUser)->post(route('tenant.leases.cancel-booking', $lease1));
+        $cancelResponse->assertSessionHas('success');
+
+        $this->assertEquals('cancelled', $lease1->fresh()->status);
+        $this->assertEquals('cancelled', $payment1->fresh()->status);
+        $this->assertEquals('available', $room1->fresh()->status);
+
+        // Sekarang tenant boleh memesan kamar 2
+        $room2 = Room::create([
+            'room_number' => 'CAN-02',
+            'floor'       => 1,
+            'price'       => 1500000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $bookResponse = $this->actingAs($tenantUser)->post(route('public.rooms.book', $room2), [
+            'ktp_number'      => '3201012345673333',
+            'start_date'      => now()->toDateString(),
+            'duration_months' => 1,
+        ]);
+
+        $bookResponse->assertSessionHas('success');
+        $this->assertDatabaseHas('leases', [
+            'room_id'   => $room2->id,
+            'tenant_id' => $tenant->id,
+            'status'    => 'pending',
+        ]);
+    }
 }
+
 

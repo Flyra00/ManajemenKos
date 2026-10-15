@@ -142,6 +142,31 @@ class BookingController extends Controller
             ]);
         }
 
+        // 4b. Filter agar setiap tenant hanya memiliki maksimal 1 kamar (aktif atau pending)
+        $existingBlockingLease = $tenant->leases()
+            ->with('room')
+            ->whereIn('status', ['active', 'pending'])
+            ->first();
+
+        if ($existingBlockingLease) {
+            $roomNum = $existingBlockingLease->room->room_number ?? 'sebelumnya';
+
+            if ($existingBlockingLease->status === 'active') {
+                return redirect()->route('dashboard')
+                    ->with('error', "Anda saat ini sudah terdaftar aktif menyewa Kamar {$roomNum}. Setiap akun penghuni dibatasi hanya dapat menyewa 1 kamar kos.");
+            }
+
+            // Jika statusnya pending (menunggu pembayaran)
+            $pendingPayment = $existingBlockingLease->payments()
+                ->whereIn('status', ['unpaid', 'pending', 'overdue'])
+                ->first();
+
+            $targetUrl = $pendingPayment ? $pendingPayment->public_url : route('dashboard');
+
+            return redirect($targetUrl)
+                ->with('error', "Anda sudah memiliki pesanan sewa Kamar {$roomNum} yang sedang menunggu pembayaran. Selesaikan pembayaran atau batalkan pesanan tersebut sebelum memilih kamar baru.");
+        }
+
         // 5 & 6. Kunci kamar lalu terbitkan Kontrak (Lease) + Invoice secara atomik.
         //
         // Lock baris kamar (lockForUpdate) mencegah dua calon penyewa membuat
@@ -227,5 +252,59 @@ class BookingController extends Controller
 
         return redirect()->to($payment->public_url)
             ->with('success', 'Pengajuan sewa berhasil! Invoice resmi Anda telah terbit. Silakan lakukan pembayaran dalam batas waktu 1x24 jam.');
+    }
+
+    /**
+     * Batalkan pemesanan kamar yang masih berstatus pending (belum dibayar).
+     */
+    public function cancelBooking(Request $request, Lease $lease)
+    {
+        $user = auth()->user();
+
+        if (! $user || ! $user->tenant || $lease->tenant_id !== $user->tenant->id) {
+            abort(403, 'Akses tidak diizinkan.');
+        }
+
+        if ($lease->status !== 'pending') {
+            return back()->with('error', 'Hanya pemesanan kamar berstatus menunggu pembayaran yang dapat dibatalkan.');
+        }
+
+        // Pastikan belum ada pembayaran yang berstatus paid atau pending verification
+        $hasPaidOrProcessing = $lease->payments()->whereIn('status', ['paid', 'pending'])->exists();
+        if ($hasPaidOrProcessing) {
+            return back()->with('error', 'Pesanan kamar ini sudah dalam proses verifikasi atau pembayaran, sehingga tidak dapat dibatalkan secara mandiri. Silakan hubungi pengelola.');
+        }
+
+        $roomNumber = $lease->room->room_number ?? '-';
+
+        DB::transaction(function () use ($lease) {
+            // Batalkan seluruh tagihan unpaid/overdue
+            $lease->payments()->whereIn('status', ['unpaid', 'overdue'])->update(['status' => 'cancelled']);
+
+            // Batalkan kontrak sewa
+            $lease->update([
+                'status' => 'cancelled',
+                'note'   => trim(($lease->note ? $lease->note . ' | ' : '') . 'Dibatalkan sendiri oleh calon penghuni.'),
+            ]);
+
+            // Pastikan kamar kembali berstatus available jika tidak ada sewa aktif lain
+            if ($lease->room && ! $lease->room->leases()->where('status', 'active')->exists()) {
+                $lease->room->update(['status' => 'available']);
+            }
+        });
+
+        $redirectUrl = $request->input('redirect_to');
+        if ($redirectUrl && filter_var($redirectUrl, FILTER_VALIDATE_URL)) {
+            $parsedHost = parse_url($redirectUrl, PHP_URL_HOST);
+            $currentHost = parse_url(config('app.url'), PHP_URL_HOST);
+
+            if ($parsedHost === $currentHost || empty($parsedHost)) {
+                return redirect($redirectUrl)
+                    ->with('success', "Pemesanan Kamar {$roomNumber} telah berhasil dibatalkan. Anda sekarang dapat melanjutkan pengajuan sewa kamar ini.");
+            }
+        }
+
+        return redirect()->route('public.rooms.index')
+            ->with('success', "Pemesanan Kamar {$roomNumber} telah berhasil dibatalkan. Anda sekarang dapat memilih kamar baru.");
     }
 }

@@ -181,14 +181,17 @@ class DashboardController extends Controller
         $recentPayments = collect();
 
         if ($tenant) {
-            $leaseIds = $tenant->leases()->pluck('id');
-
-            $unpaidPayments = Payment::whereIn('lease_id', $leaseIds)
+            $unpaidPayments = Payment::whereHas('lease', function ($q) use ($tenant) {
+                    $q->where('tenant_id', $tenant->id)
+                      ->whereIn('status', ['active', 'pending']);
+                })
                 ->whereIn('status', ['unpaid', 'pending', 'overdue'])
                 ->orderBy('due_date', 'asc')
                 ->get();
 
-            $recentPayments = Payment::whereIn('lease_id', $leaseIds)
+            $recentPayments = Payment::whereHas('lease', function ($q) use ($tenant) {
+                    $q->where('tenant_id', $tenant->id);
+                })
                 ->with('lease.room')
                 ->latest('created_at')
                 ->take(5)

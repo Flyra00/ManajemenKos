@@ -423,6 +423,41 @@ class LeaseTest extends TestCase
         $response->assertSessionHas('success');
         $this->assertEquals(1600000, $lease->fresh()->m_price);
     }
+
+    public function test_admin_cannot_create_second_active_lease_for_same_tenant(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $tenantUser = User::factory()->create();
+        $tenant = Tenant::create(['user_id' => $tenantUser->id, 'ktp_number' => '3201112233440099']);
+
+        $room1 = Room::create(['room_number' => 'L-301', 'price' => 1500000, 'status' => 'occupied']);
+        Lease::create([
+            'tenant_id'  => $tenant->id,
+            'room_id'    => $room1->id,
+            'start_date' => now()->toDateString(),
+            'm_price'    => 1500000,
+            'status'     => 'active',
+        ]);
+
+        $room2 = Room::create(['room_number' => 'L-302', 'price' => 1600000, 'status' => 'available']);
+
+        $response = $this->actingAs($admin)->post(route('leases.store'), [
+            'tenant_id'     => $tenant->id,
+            'room_id'       => $room2->id,
+            'start_date'    => now()->toDateString(),
+            'monthly_price' => 1600000,
+            'status'        => 'active',
+        ]);
+
+        $response->assertSessionHasErrors(['tenant_id']);
+        $this->assertDatabaseMissing('leases', [
+            'room_id'   => $room2->id,
+            'tenant_id' => $tenant->id,
+        ]);
+    }
 }
+
 
 

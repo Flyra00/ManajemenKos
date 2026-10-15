@@ -77,7 +77,12 @@ class PublicRoomController extends Controller
         $floors = Room::where('is_active', true)->distinct()->pluck('floor')->sort()->values();
 
         if (auth()->check()) {
-            return view('tenant.rooms.index', compact('rooms', 'floors'));
+            $existingLease = auth()->user()->tenant ? auth()->user()->tenant->leases()
+                ->with('room')
+                ->whereIn('status', ['active', 'pending'])
+                ->first() : null;
+
+            return view('tenant.rooms.index', compact('rooms', 'floors', 'existingLease'));
         }
 
         return view('public.rooms.index', compact('rooms', 'floors'));
@@ -98,7 +103,12 @@ class PublicRoomController extends Controller
         $kosSettings = KosSetting::settings();
 
         if (auth()->check()) {
-            return view('tenant.rooms.show', compact('room', 'kosSettings'));
+            $existingLease = auth()->user()->tenant ? auth()->user()->tenant->leases()
+                ->with('room')
+                ->whereIn('status', ['active', 'pending'])
+                ->first() : null;
+
+            return view('tenant.rooms.show', compact('room', 'kosSettings', 'existingLease'));
         }
 
         return view('public.rooms.show', compact('room', 'kosSettings'));

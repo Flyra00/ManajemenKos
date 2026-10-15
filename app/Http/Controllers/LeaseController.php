@@ -133,6 +133,19 @@ class LeaseController extends Controller
             }
         }
 
+        if (in_array($validated['status'], ['active', 'pending'])) {
+            $existingTenantLease = Lease::where('tenant_id', $validated['tenant_id'])
+                ->whereIn('status', ['active', 'pending'])
+                ->first();
+
+            if ($existingTenantLease) {
+                $existingRoomNum = $existingTenantLease->room->room_number ?? '-';
+                throw ValidationException::withMessages([
+                    'tenant_id' => "Penghuni ini sudah memiliki kontrak sewa ({$existingTenantLease->status}) di Kamar {$existingRoomNum}. Satu penghuni hanya boleh memiliki 1 kamar.",
+                ]);
+            }
+        }
+
         DB::transaction(function () use ($validated) {
             $lease = Lease::create([
                 'tenant_id'      => $validated['tenant_id'],
@@ -208,6 +221,20 @@ class LeaseController extends Controller
             if ($hasOtherActiveLease) {
                 throw ValidationException::withMessages([
                     'room_id' => 'Kamar ini sudah memiliki kontrak sewa aktif lain. Silakan pilih kamar lain atau ubah status kontrak sebelumnya.',
+                ]);
+            }
+        }
+
+        if (in_array($validated['status'], ['active', 'pending'])) {
+            $existingTenantLease = Lease::where('tenant_id', $validated['tenant_id'])
+                ->whereIn('status', ['active', 'pending'])
+                ->whereKeyNot($lease->id)
+                ->first();
+
+            if ($existingTenantLease) {
+                $existingRoomNum = $existingTenantLease->room->room_number ?? '-';
+                throw ValidationException::withMessages([
+                    'tenant_id' => "Penghuni ini sudah memiliki kontrak sewa ({$existingTenantLease->status}) di Kamar {$existingRoomNum}. Satu penghuni hanya boleh memiliki 1 kamar.",
                 ]);
             }
         }

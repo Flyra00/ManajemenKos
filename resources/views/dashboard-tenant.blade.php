@@ -150,8 +150,14 @@
                 Rp {{ number_format($pendingLease->monthly_price, 0, ',', '.') }}
                 <span class="small muted" style="font-weight: 400; font-size: 12px;">/ bulan (Booking Tertahan)</span>
               </div>
-              <div class="small" style="margin-top: 6px; color: #b45309; font-weight: 600;">
-                ⚠️ Kamar ini berhasil di-hold sementara. Selesaikan pembayaran invoice pertama agar status sewa aktif.
+              <div class="small" style="margin-top: 6px; color: #b45309; font-weight: 600; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                <span>⚠️ Kamar ini berhasil di-hold sementara. Selesaikan pembayaran invoice pertama agar status sewa aktif.</span>
+                <form method="POST" action="{{ route('tenant.leases.cancel-booking', $pendingLease) }}" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan pesanan Kamar {{ $pendingLease->room->room_number }}? Kamar tersebut akan dilepaskan kembali.');" style="display:inline;">
+                  @csrf
+                  <button type="submit" style="background:none; border:none; color:#dc2626; font-size:12px; cursor:pointer; text-decoration:underline; font-weight:600; padding:0;">
+                    Batalkan Pesanan Ini
+                  </button>
+                </form>
               </div>
             @else
               <div style="margin-top: 10px;">
