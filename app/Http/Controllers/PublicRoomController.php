@@ -76,6 +76,10 @@ class PublicRoomController extends Controller
         $rooms = $query->orderBy('floor')->orderBy('room_number')->paginate(9)->withQueryString();
         $floors = Room::where('is_active', true)->distinct()->pluck('floor')->sort()->values();
 
+        if (auth()->check()) {
+            return view('tenant.rooms.index', compact('rooms', 'floors'));
+        }
+
         return view('public.rooms.index', compact('rooms', 'floors'));
     }
 
@@ -92,6 +96,10 @@ class PublicRoomController extends Controller
 
         // Membaca preferensi kos tersimpan
         $kosSettings = KosSetting::settings();
+
+        if (auth()->check()) {
+            return view('tenant.rooms.show', compact('room', 'kosSettings'));
+        }
 
         return view('public.rooms.show', compact('room', 'kosSettings'));
     }

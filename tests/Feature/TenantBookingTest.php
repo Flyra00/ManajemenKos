@@ -522,4 +522,116 @@ class TenantBookingTest extends TestCase
         $postResponse->assertRedirect(route('dashboard'));
         $postResponse->assertSessionHas('error');
     }
+
+    public function test_authenticated_tenant_viewing_room_catalog_sees_dashboard_layout(): void
+    {
+        $tenantUser = User::factory()->create();
+        $tenantUser->assignRole('tenant');
+
+        Room::create([
+            'room_number' => 'CAT-01',
+            'floor'       => 1,
+            'price'       => 1200000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $response = $this->actingAs($tenantUser)->get(route('public.rooms.index'));
+
+        $response->assertOk();
+        $response->assertViewIs('tenant.rooms.index');
+        $response->assertSee('Pilihan Kamar');
+        $response->assertSee('CAT-01');
+    }
+
+    public function test_guest_user_viewing_room_catalog_sees_public_layout(): void
+    {
+        Room::create([
+            'room_number' => 'PUB-01',
+            'floor'       => 1,
+            'price'       => 1300000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $response = $this->get(route('public.rooms.index'));
+
+        $response->assertOk();
+        $response->assertViewIs('public.rooms.index');
+        $response->assertSee('PUB-01');
+    }
+
+    public function test_authenticated_tenant_viewing_room_detail_sees_dashboard_layout(): void
+    {
+        $tenantUser = User::factory()->create();
+        $tenantUser->assignRole('tenant');
+
+        $room = Room::create([
+            'room_number' => 'DTL-01',
+            'floor'       => 1,
+            'price'       => 1400000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $response = $this->actingAs($tenantUser)->get(route('public.rooms.show', $room));
+
+        $response->assertOk();
+        $response->assertViewIs('tenant.rooms.show');
+        $response->assertSee('Kamar DTL-01');
+        $response->assertSee('Formulir Pengajuan Sewa');
+    }
+
+    public function test_authenticated_tenant_viewing_invoice_sees_dashboard_layout(): void
+    {
+        $tenantUser = User::factory()->create();
+        $tenantUser->assignRole('tenant');
+        $tenant = Tenant::create([
+            'user_id'    => $tenantUser->id,
+            'ktp_number' => '3201012345679998',
+        ]);
+
+        $room = Room::create([
+            'room_number' => 'INV-01',
+            'floor'       => 1,
+            'price'       => 1500000,
+            'status'      => 'occupied',
+            'is_active'   => true,
+        ]);
+
+        $lease = Lease::create([
+            'tenant_id'      => $tenant->id,
+            'room_id'        => $room->id,
+            'start_date'     => now()->toDateString(),
+            'end_date'       => now()->addMonths(1)->toDateString(),
+            'm_price'        => 1500000,
+            'deposit_amount' => 750000,
+            'status'         => 'pending',
+        ]);
+
+        $payment = Payment::create([
+            'lease_id'       => $lease->id,
+            'invoice_number' => 'INV-TEST-0001',
+            'amount'         => 2250000,
+            'billing_period' => now()->toDateString(),
+            'due_date'       => now()->addDays(3)->toDateString(),
+            'status'         => 'unpaid',
+            'payment_method' => 'bank_tf',
+        ]);
+
+        // When logged in as tenant:
+        $response = $this->actingAs($tenantUser)->get($payment->public_url);
+
+        $response->assertOk();
+        $response->assertViewIs('tenant.invoices.show');
+        $response->assertSee('INV-TEST-0001');
+        $response->assertSee('Kembali ke Dashboard');
+
+        // When guest visits the same invoice:
+        auth()->logout();
+        $guestResponse = $this->get($payment->public_url);
+        $guestResponse->assertOk();
+        $guestResponse->assertViewIs('invoices.show');
+    }
 }
+

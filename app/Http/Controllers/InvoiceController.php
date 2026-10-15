@@ -34,6 +34,10 @@ class InvoiceController extends Controller
             }
         }
 
+        if (auth()->check()) {
+            return view('tenant.invoices.show', compact('payment', 'kosSettings', 'snapToken'));
+        }
+
         return view('invoices.show', compact('payment', 'kosSettings', 'snapToken'));
     }
 
