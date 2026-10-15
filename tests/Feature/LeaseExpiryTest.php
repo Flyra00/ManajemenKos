@@ -194,4 +194,42 @@ class LeaseExpiryTest extends TestCase
         $this->assertSame('completed', $lease->fresh()->status);
         $this->assertSame('available', $room->fresh()->status);
     }
+
+    public function test_abandoned_pending_lease_with_overdue_payment_is_automatically_cancelled_and_room_freed(): void
+    {
+        $tenant = $this->makeTenant('3201000000000108');
+        $room = Room::create([
+            'room_number' => 'EXP-P1',
+            'price'       => 1000000,
+            'status'      => 'available',
+            'is_active'   => true,
+        ]);
+
+        $lease = Lease::create([
+            'tenant_id'      => $tenant->id,
+            'room_id'        => $room->id,
+            'start_date'     => now()->toDateString(),
+            'end_date'       => now()->addMonths(1)->toDateString(),
+            'monthly_price'  => 1000000,
+            'deposit_amount' => 0,
+            'status'         => 'pending',
+        ]);
+
+        $payment = \App\Models\Payment::create([
+            'lease_id'       => $lease->id,
+            'invoice_number' => 'INV-EXP-001',
+            'amount'         => 1000000,
+            'billing_period' => now()->toDateString(),
+            'due_date'       => now()->subDay()->toDateString(), // Jatuh tempo kemarin (sudah lewat)
+            'status'         => 'unpaid',
+            'payment_method' => 'bank_tf',
+        ]);
+
+        $closed = app(LeaseService::class)->expireOverdueLeases();
+
+        $this->assertGreaterThanOrEqual(1, $closed);
+        $this->assertSame('cancelled', $lease->fresh()->status);
+        $this->assertSame('cancelled', $payment->fresh()->status);
+        $this->assertSame('available', $room->fresh()->status);
+    }
 }

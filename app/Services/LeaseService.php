@@ -50,6 +50,33 @@ class LeaseService
             $closed++;
         }
 
+        // 2. Batalkan otomatis pemesanan kamar (pending) yang melewati batas jatuh tempo (1x24 jam)
+        // dan tidak dibayar atau ditinggalkan begitu saja oleh calon penyewa.
+        $expiredPendingLeases = Lease::where('status', 'pending')
+            ->whereDoesntHave('payments', fn ($p) => $p->whereIn('status', ['paid', 'pending']))
+            ->whereHas('payments', fn ($p) => $p->whereIn('status', ['unpaid', 'overdue'])
+                ->whereDate('due_date', '<', now()->toDateString()))
+            ->get();
+
+        foreach ($expiredPendingLeases as $pendingLease) {
+            DB::transaction(function () use ($pendingLease) {
+                $pendingLease->payments()
+                    ->whereIn('status', ['unpaid', 'overdue'])
+                    ->update(['status' => 'cancelled']);
+
+                $pendingLease->update([
+                    'status' => 'cancelled',
+                    'note'   => trim(($pendingLease->note ? $pendingLease->note . ' | ' : '') . 'Otomatis dibatalkan sistem karena melewati batas waktu pembayaran 1x24 jam.'),
+                ]);
+
+                if ($pendingLease->room && ! $pendingLease->room->leases()->where('status', 'active')->exists()) {
+                    $pendingLease->room->update(['status' => 'available']);
+                }
+            });
+
+            $closed++;
+        }
+
         return $closed;
     }
 }
